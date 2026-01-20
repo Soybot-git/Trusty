@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 export class UrlInputComponent {
   @Input() isLoading = false;
   @Output() urlSubmit = new EventEmitter<string>();
+  @Output() helpClick = new EventEmitter<void>();
   @Output() infoClick = new EventEmitter<void>();
 
   url = '';

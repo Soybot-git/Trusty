@@ -1,0 +1,82 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h2>Cosa devo inserire?</h2>
+    </div>
+
+    <div class="modal-body">
+      <section class="info-section">
+        <h3>🔗 L'indirizzo del sito</h3>
+        <p>
+          Inserisci l'<strong>indirizzo web</strong> (URL) del sito e-commerce che vuoi verificare.
+          Lo trovi nella <strong>barra degli indirizzi</strong> del tuo browser, in alto.
+        </p>
+      </section>
+
+      <section class="info-section">
+        <h3>📱 Come copiare l'indirizzo</h3>
+        <div class="steps-list">
+          <div class="step">
+            <span class="step-number">1</span>
+            <span class="step-text">Vai sul sito che vuoi verificare</span>
+          </div>
+          <div class="step">
+            <span class="step-number">2</span>
+            <span class="step-text">Tocca la barra degli indirizzi in alto</span>
+          </div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <span class="step-text">Copia l'indirizzo (tieni premuto → "Copia")</span>
+          </div>
+          <div class="step">
+            <span class="step-number">4</span>
+            <span class="step-text">Torna qui e incolla nel campo di ricerca</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-section">
+        <h3>✅ Esempi corretti</h3>
+        <div class="examples">
+          <div class="example good">
+            <code>amazon.it</code>
+          </div>
+          <div class="example good">
+            <code>https://www.zalando.it</code>
+          </div>
+          <div class="example good">
+            <code>www.mediaworld.it/offerte</code>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-section">
+        <h3>❌ Esempi non validi</h3>
+        <div class="examples">
+          <div class="example bad">
+            <code>nome del negozio</code>
+            <span class="example-note">Non inserire il nome, ma l'indirizzo web</span>
+          </div>
+          <div class="example bad">
+            <code>cerca scarpe nike</code>
+            <span class="example-note">Non è una ricerca, serve l'URL del sito</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-section tip-section">
+        <h3>💡 Suggerimento</h3>
+        <p>
+          Se hai ricevuto un <strong>link via WhatsApp, email o SMS</strong> e vuoi verificarlo,
+          <strong>non aprirlo</strong>! Copia il link direttamente dal messaggio e incollalo qui
+          per controllare se è sicuro prima di visitarlo.
+        </p>
+      </section>
+    </div>
+
+    <div class="modal-footer">
+      <button class="got-it-btn" (click)="close.emit()">Ho capito</button>
+    </div>
+  </div>
+</div>

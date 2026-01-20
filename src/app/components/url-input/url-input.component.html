@@ -28,7 +28,13 @@
       VERIFICA
     }
   </button>
-  <button class="info-link" (click)="infoClick.emit()">
-    Come funziona?
-  </button>
+  <div class="info-links">
+    <button class="info-link" (click)="helpClick.emit()">
+      Cosa devo inserire?
+    </button>
+    <span class="link-separator">•</span>
+    <button class="info-link" (click)="infoClick.emit()">
+      Come funziona?
+    </button>
+  </div>
 </div>

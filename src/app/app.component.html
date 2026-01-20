@@ -1,13 +1,14 @@
 <div class="app-container">
   <header class="header">
     <img src="assets/logo.svg" alt="Trusty" class="logo-img" />
-    <div class="tagline">Questo sito è sicuro? Verifica prima di comprare.</div>
+    <div class="tagline">Verifica in pochi secondi, se il sito su cui vuoi acquistare è sicuro.</div>
   </header>
 
   <main class="main">
     <app-url-input
       [isLoading]="isLoading"
       (urlSubmit)="onCheckUrl($event)"
+      (helpClick)="showHelpModal = true"
       (infoClick)="showInfoModal = true"
     />
 
@@ -42,5 +43,9 @@
 
   @if (showInfoModal) {
     <app-info-modal (close)="showInfoModal = false" />
+  }
+
+  @if (showHelpModal) {
+    <app-help-modal (close)="showHelpModal = false" />
   }
 </div>
