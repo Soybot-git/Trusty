@@ -1,0 +1,120 @@
+:host {
+  display: block;
+  width: 90%;
+  max-width: 420px;
+}
+
+.share-container {
+  width: 100%;
+  animation: fadeIn 0.4s ease-out 0.5s both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.share-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.share-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 90px;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.share-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.4s ease;
+}
+
+.share-btn:hover::before {
+  left: 100%;
+}
+
+.share-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+}
+
+.share-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.share-btn .icon {
+  font-size: 22px;
+}
+
+.share-btn .label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.whatsapp {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+}
+
+.whatsapp:hover {
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+.telegram {
+  background: linear-gradient(135deg, #0088CC 0%, #005F8F 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.25);
+}
+
+.telegram:hover {
+  box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+}
+
+.copy {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.copy:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+}
+
+.copy.copied {
+  background: linear-gradient(135deg, #00bf63 0%, #059669 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(0, 191, 99, 0.3);
+}

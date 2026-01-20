@@ -1,0 +1,25 @@
+@if (result) {
+  <div class="share-container">
+    <div class="share-label">Condividi risultato</div>
+    <div class="share-buttons">
+      <button class="share-btn whatsapp" (click)="shareWhatsApp()">
+        <span class="icon">📱</span>
+        <span class="label">WhatsApp</span>
+      </button>
+
+      <button class="share-btn telegram" (click)="shareTelegram()">
+        <span class="icon">✈️</span>
+        <span class="label">Telegram</span>
+      </button>
+
+      <button
+        class="share-btn copy"
+        (click)="copyToClipboard()"
+        [class.copied]="copied"
+      >
+        <span class="icon">{{ copied ? '✓' : '📋' }}</span>
+        <span class="label">{{ copied ? 'Copiato!' : 'Copia' }}</span>
+      </button>
+    </div>
+  </div>
+}

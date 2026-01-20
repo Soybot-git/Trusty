@@ -1,0 +1,34 @@
+<div class="url-input-container">
+  <div class="input-wrapper">
+    <input
+      type="text"
+      [(ngModel)]="url"
+      (keyup.enter)="onSubmit()"
+      [disabled]="isLoading"
+      placeholder="Incolla link..."
+      class="url-input"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+    />
+    @if (url) {
+      <button class="clear-btn" (click)="clearInput()" [disabled]="isLoading">
+        ✕
+      </button>
+    }
+  </div>
+  <button
+    class="verify-btn"
+    (click)="onSubmit()"
+    [disabled]="!url.trim() || isLoading"
+  >
+    @if (isLoading) {
+      <span class="spinner"></span>
+    } @else {
+      VERIFICA
+    }
+  </button>
+  <button class="info-link" (click)="infoClick.emit()">
+    Come funziona?
+  </button>
+</div>

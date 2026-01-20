@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx @angular/cli@17 new:*)",
+      "Bash(npx ng add:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout:*)",
+      "Bash(npx ng serve:*)",
+      "Bash(copy \"C:\\\\Users\\\\andre\\\\Desktop\\\\Testo del paragrafo.svg\" \"C:\\\\Users\\\\andre\\\\Desktop\\\\trusty\\\\src\\\\assets\\\\logo.svg\")",
+      "Bash(npm install --save-dev @vercel/node)"
+    ]
+  }
+}

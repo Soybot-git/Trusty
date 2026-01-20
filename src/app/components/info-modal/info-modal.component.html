@@ -1,0 +1,71 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h2>Come funziona <span style="color: var(--primary);">Trusty</span>?</h2>
+    </div>
+
+    <div class="modal-body">
+      <section class="info-section">
+        <h3>🔍 Cosa analizziamo</h3>
+        <p>Trusty esegue automaticamente <strong>6 controlli</strong> su ogni sito:</p>
+        <ul>
+          <li><strong>Google Safe Browsing</strong> — Verifica se il sito è segnalato per malware o phishing</li>
+          <li><strong>Età del dominio</strong> — I siti truffa sono spesso molto recenti</li>
+          <li><strong>Certificato SSL</strong> — Connessione sicura e crittografata</li>
+          <li><strong>Reputazione IP</strong> — Analisi del server che ospita il sito</li>
+          <li><strong>Recensioni online</strong> — Valutazioni su Trustpilot e altre piattaforme</li>
+          <li><strong>Indicatori italiani</strong> — Presenza di P.IVA, metodi di pagamento sicuri, pagine legali</li>
+        </ul>
+      </section>
+
+      <section class="info-section">
+        <h3>📊 Come calcoliamo il punteggio</h3>
+        <p>Ogni controllo ha un peso specifico nel punteggio finale:</p>
+        <div class="score-breakdown">
+          <div class="score-item">
+            <span class="score-label">Safe Browsing</span>
+            <span class="score-weight">25%</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Età dominio</span>
+            <span class="score-weight">20%</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Recensioni</span>
+            <span class="score-weight">20%</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Reputazione IP</span>
+            <span class="score-weight">15%</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Certificato SSL</span>
+            <span class="score-weight">10%</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Indicatori IT</span>
+            <span class="score-weight">10%</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-section disclaimer-section">
+        <h3>⚠️ Importante</h3>
+        <p>
+          Trusty fornisce una <strong>stima automatizzata</strong> basata su fattori pubblicamente verificabili.
+          Tuttavia, <strong>nessun sistema è infallibile</strong>: alcuni siti fraudolenti potrebbero adottare
+          strategie sofisticate per ingannare i controlli automatici.
+        </p>
+        <p>
+          <strong>Verifica sempre autonomamente</strong> prima di effettuare acquisti, specialmente per
+          importi elevati. In caso di dubbi, preferisci metodi di pagamento che offrono protezione acquirenti.
+        </p>
+      </section>
+    </div>
+
+    <div class="modal-footer">
+      <button class="got-it-btn" (click)="close.emit()">Ho capito</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,296 @@
+:host {
+  display: block;
+  width: 90%;
+  max-width: 420px;
+}
+
+.result-card {
+  position: relative;
+  width: 100%;
+  background: #fff;
+  border-radius: 28px;
+  padding: 28px 24px;
+  overflow: hidden;
+  animation: cardAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.level-safe .card-glow {
+  background: radial-gradient(circle at 30% 30%, rgba(0, 191, 99, 0.15), transparent 50%);
+}
+
+.level-caution .card-glow {
+  background: radial-gradient(circle at 30% 30%, rgba(245, 158, 11, 0.15), transparent 50%);
+}
+
+.level-danger .card-glow {
+  background: radial-gradient(circle at 30% 30%, rgba(239, 68, 68, 0.15), transparent 50%);
+}
+
+.card-pattern {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Domain header */
+.domain-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 12px 20px;
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: 14px;
+  animation: fadeSlideDown 0.4s ease-out 0.1s both;
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.domain-icon {
+  display: flex;
+  color: var(--text-muted);
+}
+
+.domain-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+/* Score section */
+.score-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.score-ring {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 16px;
+}
+
+.score-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.level-safe .score-svg {
+  color: #00bf63;
+}
+
+.level-caution .score-svg {
+  color: #F59E0B;
+}
+
+.level-danger .score-svg {
+  color: #EF4444;
+}
+
+.score-progress {
+  transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: progressAppear 1s ease-out 0.3s both;
+}
+
+@keyframes progressAppear {
+  from {
+    stroke-dashoffset: 339.292;
+  }
+}
+
+.score-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.score-number {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.level-safe .score-number {
+  color: #009950;
+}
+
+.level-caution .score-number {
+  color: #D97706;
+}
+
+.level-danger .score-number {
+  color: #DC2626;
+}
+
+.score-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.level-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 14px;
+  animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s both;
+}
+
+@keyframes badgePop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.level-safe .level-badge {
+  background: linear-gradient(135deg, rgba(0, 191, 99, 0.15), rgba(0, 153, 80, 0.15));
+  color: #008040;
+}
+
+.level-caution .level-badge {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+  color: #B45309;
+}
+
+.level-danger .level-badge {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+  color: #B91C1C;
+}
+
+.level-icon {
+  font-size: 16px;
+}
+
+/* Checks section */
+.checks-section {
+  position: relative;
+  z-index: 1;
+}
+
+.checks-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.checks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.8);
+  animation: checkSlideIn 0.4s ease-out both;
+  transition: all 0.2s ease;
+}
+
+@keyframes checkSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.check-item:hover {
+  background: rgba(248, 250, 252, 1);
+  transform: translateX(4px);
+}
+
+.check-icon-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.check-check .check-icon-wrapper {
+  background: linear-gradient(135deg, #E6FFF2, #CCFFE6);
+  color: #009950;
+}
+
+.check-warning .check-icon-wrapper {
+  background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+  color: #D97706;
+}
+
+.check-danger .check-icon-wrapper {
+  background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+  color: #DC2626;
+}
+
+.check-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}

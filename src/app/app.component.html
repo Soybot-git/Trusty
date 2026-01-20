@@ -1,0 +1,46 @@
+<div class="app-container">
+  <header class="header">
+    <img src="assets/logo.svg" alt="Trusty" class="logo-img" />
+    <div class="tagline">Questo sito è sicuro? Verifica prima di comprare.</div>
+  </header>
+
+  <main class="main">
+    <app-url-input
+      [isLoading]="isLoading"
+      (urlSubmit)="onCheckUrl($event)"
+      (infoClick)="showInfoModal = true"
+    />
+
+    @if (isLoading) {
+      <app-loading message="Analisi in corso" />
+    }
+
+    @if (result && !isLoading) {
+      <app-trust-result [result]="result" />
+      <app-share-buttons [result]="result" />
+    }
+
+    @if (error && !isLoading) {
+      <div class="error-message">
+        <span class="error-icon">⚠️</span>
+        <span>{{ error }}</span>
+      </div>
+    }
+  </main>
+
+  <footer class="footer">
+    <p class="disclaimer">
+      Trusty fornisce una stima automatizzata basata su fattori pubblici. Non
+      garantisce la legittimità di alcun sito. Verifica sempre autonomamente prima
+      di acquistare.
+    </p>
+
+    @if (!isInstalled) {
+      <button class="install-btn" (click)="installApp()">📲 Installa App</button>
+    }
+  </footer>
+
+  @if (showInfoModal) {
+    <app-info-modal (close)="showInfoModal = false" />
+  }
+</div>

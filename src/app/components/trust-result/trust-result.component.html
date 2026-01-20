@@ -1,0 +1,88 @@
+@if (result) {
+  <div class="result-card" [class]="'level-' + result.level">
+    <!-- Decorative elements -->
+    <div class="card-glow"></div>
+    <div class="card-pattern"></div>
+
+    <!-- Domain header -->
+    <div class="domain-header">
+      <div class="domain-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </div>
+      <span class="domain-text">{{ result.domain }}</span>
+    </div>
+
+    <!-- Score section -->
+    <div class="score-section">
+      <div class="score-ring">
+        <svg viewBox="0 0 120 120" class="score-svg">
+          <circle
+            cx="60"
+            cy="60"
+            r="54"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="8"
+            opacity="0.1"
+          />
+          <circle
+            cx="60"
+            cy="60"
+            r="54"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="8"
+            stroke-linecap="round"
+            [style.strokeDasharray]="getStrokeDasharray()"
+            [style.strokeDashoffset]="getStrokeDashoffset()"
+            class="score-progress"
+          />
+        </svg>
+        <div class="score-content">
+          <span class="score-number">{{ result.score }}</span>
+          <span class="score-label">/ 100</span>
+        </div>
+      </div>
+      <div class="level-badge">
+        <span class="level-icon">{{ getLevelIcon(result.level) }}</span>
+        <span class="level-text">{{ getLevelLabel(result.level) }}</span>
+      </div>
+    </div>
+
+    <!-- Checks section -->
+    <div class="checks-section">
+      <div class="checks-title">Dettaglio verifiche</div>
+      <div class="checks-grid">
+        @for (bullet of result.bullets; track bullet.text; let i = $index) {
+          <div
+            class="check-item"
+            [class]="'check-' + bullet.icon"
+            [style.animationDelay]="(i * 0.1) + 's'"
+          >
+            <div class="check-icon-wrapper">
+              @if (bullet.icon === 'check') {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              } @else if (bullet.icon === 'warning') {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 9v4M12 17h.01"/>
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+              } @else {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M15 9l-6 6M9 9l6 6"/>
+                </svg>
+              }
+            </div>
+            <span class="check-text">{{ bullet.text }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
