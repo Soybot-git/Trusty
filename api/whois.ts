@@ -206,7 +206,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             type: 'whois',
             status,
             score,
-            weight: 20,
+            weight: 15,
             message,
             details: {
               domainAge,
@@ -262,7 +262,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           type: 'whois',
           status: 'warning',
           score: 50,
-          weight: 20,
+          weight: 15,
           message: 'Data di creazione non disponibile',
           details: {
             domainAge: null,
@@ -282,7 +282,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'whois',
         status,
         score,
-        weight: 20,
+        weight: 15,
         message,
         details: {
           domainAge,
@@ -300,7 +300,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'whois',
         status: 'warning',
         score: 50,
-        weight: 20,
+        weight: 15,
         message: 'Impossibile verificare età del dominio',
         details: {
           domainAge: null,

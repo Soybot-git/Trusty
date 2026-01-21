@@ -53,7 +53,7 @@ export class MockReviewsService {
       type: 'reviews',
       status,
       score,
-      weight: 20,
+      weight: 25,
       message,
       details,
     };

@@ -54,7 +54,7 @@ export class MockWhoisService {
       type: 'whois',
       status,
       score,
-      weight: 20,
+      weight: 15,
       message,
       details,
     };

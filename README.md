@@ -47,10 +47,10 @@ Il punteggio finale (0-100) combina due tipologie di controlli:
 | Check | Peso | Fonte | Stato |
 |-------|------|-------|-------|
 | Safe Browsing | 25% | Google Safe Browsing API | ✅ Attivo |
-| Età dominio | 20% | RDAP + who.is | ✅ Attivo |
-| SSL | 10% | Verifica diretta TLS | ✅ Attivo |
+| Recensioni | 25% | SerpApi (Trustpilot) | ⏳ Da configurare |
+| Età dominio | 15% | RDAP + who.is | ✅ Attivo |
 | Reputazione | 15% | IPQualityScore | ⏳ Da configurare |
-| Recensioni | 20% | SerpApi (Trustpilot) | ⏳ Da configurare |
+| SSL | 10% | Verifica diretta TLS | ✅ Attivo |
 
 ### Controlli Proprietari Trusty
 

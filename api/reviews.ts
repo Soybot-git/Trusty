@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       type: 'reviews',
       status: 'warning',
       score: 50,
-      weight: 20,
+      weight: 25,
       message: 'Poche recensioni disponibili',
       details: {
         rating: 0,
