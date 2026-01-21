@@ -146,7 +146,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'ssl',
         status,
         score,
-        weight: 10,
+        weight: 15,
         message,
         details: {
           isValid: cert.isValid,
@@ -170,7 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           type: 'ssl',
           status: 'danger',
           score: 0,
-          weight: 10,
+          weight: 15,
           message: 'Dominio non trovato',
           details: {
             isValid: false,
@@ -186,7 +186,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           type: 'ssl',
           status: 'danger',
           score: 0,
-          weight: 10,
+          weight: 15,
           message: 'Connessione HTTPS non disponibile',
           details: {
             isValid: false,
@@ -201,7 +201,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'ssl',
         status: 'warning',
         score: 50,
-        weight: 10,
+        weight: 15,
         message: 'Impossibile verificare certificato SSL',
         details: {
           isValid: false,

@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'safe-browsing',
         status: 'warning',
         score: 50,
-        weight: 25,
+        weight: 0,
         message: 'Verifica Safe Browsing non disponibile',
         details: {
           isMalware: false,
@@ -119,7 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           type: 'safe-browsing',
           status: 'danger',
           score: 0,
-          weight: 25,
+          weight: 0,
           message,
           details: {
             isMalware,
@@ -136,7 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'safe-browsing',
         status: 'safe',
         score: 100,
-        weight: 25,
+        weight: 0,
         message: 'Nessuna minaccia rilevata da Google',
         details: {
           isMalware: false,
@@ -153,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'safe-browsing',
         status: 'warning',
         score: 50,
-        weight: 25,
+        weight: 0,
         message: 'Impossibile verificare con Google Safe Browsing',
         details: {
           isMalware: false,

@@ -40,25 +40,43 @@ npm start
 
 ## Algoritmo Trust Score
 
-Il punteggio finale (0-100) combina due tipologie di controlli:
+Il punteggio finale (0-100) combina controlli fissi e dinamici:
 
-### API Esterne (dati da terze parti)
+### Distribuzione Pesi
 
-| Check | Peso | Fonte | Stato |
-|-------|------|-------|-------|
-| Safe Browsing | 25% | Google Safe Browsing API | ✅ Attivo |
-| Recensioni | 25% | SerpApi (Trustpilot) | ✅ Attivo |
-| Età dominio | 15% | RDAP + who.is | ✅ Attivo |
-| Reputazione | 15% | IPQualityScore | ✅ Attivo |
-| SSL | 10% | Verifica diretta TLS | ✅ Attivo |
+| Check | Peso | Note |
+|-------|------|------|
+| Safe Browsing | 0% | Filtro preliminare (blocco se malware) |
+| WHOIS (Età dominio) | 15% | Fisso |
+| SSL | 15% | Fisso |
+| Euristiche | 15% | Fisso |
+| Recensioni | 10-30% | Variabile in base al numero di recensioni |
+| IPQS (Reputazione) | 45-25% | Complementare (55% - peso recensioni) |
+| **TOTALE** | **100%** | Sempre bilanciato |
+
+### Logica Reviews + IPQS (complementare)
+
+| Numero recensioni | Peso Reviews | Peso IPQS |
+|-------------------|--------------|-----------|
+| < 50 | 10% | 45% |
+| 50 - 200 | 20% | 35% |
+| > 200 | 30% | 25% |
+
+**Razionale**: poche recensioni potrebbero essere false → IPQS compensa; molte recensioni = feedback reale affidabile → contano di più.
+
+### API Esterne
+
+| Check | Fonte | Stato |
+|-------|-------|-------|
+| Safe Browsing | Google Safe Browsing API | ✅ Attivo |
+| Recensioni | SerpApi (Trustpilot) | ✅ Attivo |
+| Età dominio | RDAP + who.is | ✅ Attivo |
+| Reputazione | IPQualityScore | ✅ Attivo |
+| SSL | Verifica diretta TLS | ✅ Attivo |
 
 ### Controlli Proprietari Trusty
 
-| Check | Peso | Stato |
-|-------|------|-------|
-| Euristiche | 10% | ✅ Attivo |
-
-**Dettaglio controlli euristici:**
+**Dettaglio controlli euristici (15%):**
 - **Typosquatting** — Rileva domini che imitano brand famosi (es. `amaz0n.com`, `paypa1.com`)
 - **TLD sospetti** — Penalizza estensioni spesso usate per truffe (`.xyz`, `.top`, `.click`)
 - **Pattern sospetti** — Troppi trattini, numeri, keyword come "free", "gratis", "win"
@@ -71,7 +89,7 @@ Il punteggio finale (0-100) combina due tipologie di controlli:
 - **Danger**: score < 40
 
 ### Override di sicurezza
-- Malware/phishing rilevato → score = 0
+- Malware/phishing rilevato → blocco immediato (score = 0)
 - Dominio < 30 giorni → max score 50
 
 ## Struttura Progetto

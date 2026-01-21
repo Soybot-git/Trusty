@@ -110,6 +110,22 @@ function parseReviewCount(text: string): number {
   return isNaN(num) ? 0 : num;
 }
 
+/**
+ * Calculate dynamic weight based on number of reviews
+ * - < 50 reviews: 10% (few reviews might be fake)
+ * - 50-200 reviews: 20% (moderate confidence)
+ * - > 200 reviews: 30% (high confidence in real feedback)
+ */
+function getReviewsWeight(totalReviews: number): number {
+  if (totalReviews < 50) {
+    return 10;
+  }
+  if (totalReviews <= 200) {
+    return 20;
+  }
+  return 30;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -139,11 +155,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'reviews',
         status: 'warning',
         score: 50,
-        weight: 25,
+        weight: 10, // Minimum weight when reviews unavailable
         message: 'Verifica recensioni non disponibile',
         details: {
           rating: null,
-          totalReviews: null,
+          totalReviews: 0,
           source: 'Trustpilot',
           url: `https://www.trustpilot.com/review/${domain}`,
           error: 'API not configured',
@@ -230,7 +246,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           type: 'reviews',
           status: 'warning',
           score: 50,
-          weight: 25,
+          weight: 10, // Minimum weight when no reviews found
           message: 'Nessuna recensione trovata su Trustpilot',
           details: {
             rating: null,
@@ -243,13 +259,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const { score, status, message } = getScoreFromRating(rating, totalReviews);
+    const weight = getReviewsWeight(totalReviews);
 
     return res.status(200).json({
       result: {
         type: 'reviews',
         status,
         score,
-        weight: 25,
+        weight,
         message,
         details: {
           rating,
@@ -267,11 +284,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'reviews',
         status: 'warning',
         score: 50,
-        weight: 25,
+        weight: 10, // Minimum weight on error
         message: 'Impossibile verificare recensioni',
         details: {
           rating: null,
-          totalReviews: null,
+          totalReviews: 0,
           source: 'Trustpilot',
           url: `https://www.trustpilot.com/review/${domain}`,
           error: error instanceof Error ? error.message : 'Unknown error',

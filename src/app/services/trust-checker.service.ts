@@ -128,13 +128,20 @@ export class TrustCheckerService {
   }
 
   private getWeightForType(type: string): number {
+    // Updated weights for the new scoring system:
+    // Safe Browsing: 0% (preliminary filter only, blocks if malware)
+    // WHOIS: 15% (fixed)
+    // SSL: 15% (fixed)
+    // Heuristics: 15% (fixed)
+    // Reviews: 10-30% (dynamic based on review count, default 10)
+    // IPQS: 45-25% (complementary to reviews: 55 - reviewsWeight)
     const weights: Record<string, number> = {
-      'safe-browsing': 25,
-      whois: 20,
-      ssl: 10,
-      ipqs: 15,
-      reviews: 20,
-      heuristics: 10,
+      'safe-browsing': 0,
+      whois: 15,
+      ssl: 15,
+      ipqs: 45, // Default max when reviews weight is minimum
+      reviews: 10, // Default minimum
+      heuristics: 15,
     };
     return weights[type] || 10;
   }

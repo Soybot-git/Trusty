@@ -46,6 +46,15 @@ export class ScoringService {
       }
     }
 
+    // Calculate IPQS complementary weight based on reviews weight
+    // Reviews: 10-30%, IPQS: 45-25% (total always 55%)
+    const reviewsCheck = checks.find((c) => c.type === 'reviews');
+    const ipqsCheck = checks.find((c) => c.type === 'ipqs');
+    if (reviewsCheck && ipqsCheck) {
+      const reviewsWeight = reviewsCheck.weight;
+      ipqsCheck.weight = 55 - reviewsWeight;
+    }
+
     // Calculate weighted score
     let totalWeight = 0;
     let weightedScore = 0;
