@@ -77,17 +77,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const domain = extractDomain(url);
 
   try {
-    const response = await fetch(`https://rdap.org/domain/${domain}`, {
-      headers: {
-        'Accept': 'application/rdap+json',
-      },
-    });
+    // Try multiple RDAP sources
+    const rdapUrls = [
+      `https://rdap.org/domain/${domain}`,
+      `https://rdap.verisign.com/com/v1/domain/${domain}`,
+      `https://rdap.nic.it/domain/${domain}`,
+    ];
 
-    if (!response.ok) {
-      throw new Error(`RDAP error: ${response.status}`);
+    let data: RdapResponse | null = null;
+    let lastError: string = '';
+
+    for (const rdapUrl of rdapUrls) {
+      try {
+        const response = await fetch(rdapUrl, {
+          headers: {
+            'Accept': 'application/rdap+json',
+            'User-Agent': 'Trusty/1.0 (https://trusty.vercel.app)',
+          },
+        });
+
+        if (response.ok) {
+          data = await response.json();
+          break;
+        } else {
+          lastError = `${rdapUrl}: ${response.status}`;
+        }
+      } catch (e) {
+        lastError = `${rdapUrl}: ${e instanceof Error ? e.message : 'failed'}`;
+      }
     }
 
-    const data: RdapResponse = await response.json();
+    if (!data) {
+      throw new Error(`All RDAP sources failed. Last: ${lastError}`);
+    }
 
     // Extract creation and expiration dates
     let creationDate: string | null = null;
