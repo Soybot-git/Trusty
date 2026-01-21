@@ -90,6 +90,10 @@ Il sistema aggrega recensioni da più fonti per una valutazione più affidabile:
 - Media semplice se mancano i conteggi
 - Il peso dinamico (10-30%) si basa sul totale delle recensioni aggregate
 
+**Ottimizzazione API**: 2 chiamate SerpAPI per verifica
+- 1 query combinata (OR) per tutti i siti di recensioni
+- 1 query per Google Knowledge Graph
+
 ### Controlli Proprietari Trusty
 
 **Dettaglio controlli euristici (15%):**

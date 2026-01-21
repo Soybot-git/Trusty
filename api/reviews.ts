@@ -180,16 +180,54 @@ function extractRatingFromResult(result: SerpApiResult['organic_results'][0]): {
   return { rating, totalReviews };
 }
 
-// ==================== SEARCH FUNCTION ====================
+// ==================== SEARCH FUNCTIONS ====================
 
-async function searchAllReviewSources(domain: string, apiKey: string): Promise<ReviewSource[]> {
+/**
+ * Search for Google Knowledge Graph reviews (separate query without site: filter)
+ */
+async function searchGoogleKnowledgeGraph(domain: string, apiKey: string): Promise<ReviewSource | null> {
+  const searchQuery = encodeURIComponent(`${domain}`);
+  const serpUrl = `https://serpapi.com/search.json?engine=google&q=${searchQuery}&api_key=${apiKey}&num=1&hl=it&gl=it`;
+
+  try {
+    const response = await fetch(serpUrl);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: SerpApiResult = await response.json();
+
+    if (data.error || !data.knowledge_graph) {
+      return null;
+    }
+
+    const kg = data.knowledge_graph;
+    if (kg.rating || kg.review_count) {
+      return {
+        name: 'Google',
+        rating: kg.rating || null,
+        totalReviews: kg.review_count || 0,
+        url: kg.reviews_link || null,
+      };
+    }
+  } catch (error) {
+    console.error('Error searching Google Knowledge Graph:', error);
+  }
+
+  return null;
+}
+
+/**
+ * Search all review sites with combined OR query
+ */
+async function searchReviewSites(domain: string, apiKey: string): Promise<ReviewSource[]> {
   // Build combined OR query for all review sites
-  // Format: "domain" (site:trustpilot.com OR site:recensioni-verificate.com OR site:ekomi.it)
   const sitesQuery = REVIEW_SITES.map(s => s.siteQuery).join(' OR ');
   const searchQuery = encodeURIComponent(`"${domain}" (${sitesQuery})`);
   const serpUrl = `https://serpapi.com/search.json?engine=google&q=${searchQuery}&api_key=${apiKey}&num=15&hl=it&gl=it`;
 
-  const sources: Map<string, ReviewSource> = new Map();
+  const sources: ReviewSource[] = [];
 
   try {
     const response = await fetch(serpUrl);
@@ -204,18 +242,7 @@ async function searchAllReviewSources(domain: string, apiKey: string): Promise<R
       throw new Error(data.error);
     }
 
-    // Check knowledge graph for Google reviews
-    if (data.knowledge_graph) {
-      const kg = data.knowledge_graph;
-      if (kg.rating || kg.review_count) {
-        sources.set('Google', {
-          name: 'Google',
-          rating: kg.rating || null,
-          totalReviews: kg.review_count || 0,
-          url: kg.reviews_link || null,
-        });
-      }
-    }
+    const foundSites = new Set<string>();
 
     // Process organic results
     if (data.organic_results && data.organic_results.length > 0) {
@@ -226,11 +253,12 @@ async function searchAllReviewSources(domain: string, apiKey: string): Promise<R
         if (!site) continue;
 
         // Skip if we already have data for this source
-        if (sources.has(site.name)) continue;
+        if (foundSites.has(site.name)) continue;
+        foundSites.add(site.name);
 
         const { rating, totalReviews } = extractRatingFromResult(result);
 
-        sources.set(site.name, {
+        sources.push({
           name: site.name,
           rating,
           totalReviews,
@@ -239,10 +267,31 @@ async function searchAllReviewSources(domain: string, apiKey: string): Promise<R
       }
     }
   } catch (error) {
-    console.error('Error searching review sources:', error);
+    console.error('Error searching review sites:', error);
   }
 
-  return Array.from(sources.values());
+  return sources;
+}
+
+/**
+ * Search all review sources (review sites + Google Knowledge Graph)
+ * Uses 2 API calls: one for review sites, one for Google KG
+ */
+async function searchAllReviewSources(domain: string, apiKey: string): Promise<ReviewSource[]> {
+  // Run both searches in parallel
+  const [reviewSites, googleKG] = await Promise.all([
+    searchReviewSites(domain, apiKey),
+    searchGoogleKnowledgeGraph(domain, apiKey),
+  ]);
+
+  const sources: ReviewSource[] = [...reviewSites];
+
+  // Add Google KG if found
+  if (googleKG) {
+    sources.push(googleKG);
+  }
+
+  return sources;
 }
 
 // ==================== AGGREGATION ====================
