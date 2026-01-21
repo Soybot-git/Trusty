@@ -32,6 +32,40 @@ function extractDomain(url: string): string {
   }
 }
 
+function getTld(domain: string): string {
+  const parts = domain.split('.');
+  return parts[parts.length - 1].toLowerCase();
+}
+
+function getRdapUrlsForDomain(domain: string): string[] {
+  const tld = getTld(domain);
+
+  // TLD-specific RDAP servers (more reliable)
+  const tldServers: Record<string, string> = {
+    'com': `https://rdap.verisign.com/com/v1/domain/${domain}`,
+    'net': `https://rdap.verisign.com/net/v1/domain/${domain}`,
+    'org': `https://rdap.publicinterestregistry.org/rdap/domain/${domain}`,
+    'it': `https://rdap.nic.it/domain/${domain}`,
+    'eu': `https://rdap.eu/domain/${domain}`,
+    'de': `https://rdap.denic.de/domain/${domain}`,
+    'uk': `https://rdap.nominet.uk/uk/domain/${domain}`,
+    'fr': `https://rdap.nic.fr/domain/${domain}`,
+    'nl': `https://rdap.sidn.nl/domain/${domain}`,
+  };
+
+  const urls: string[] = [];
+
+  // Add TLD-specific server first if available
+  if (tldServers[tld]) {
+    urls.push(tldServers[tld]);
+  }
+
+  // Add generic fallback
+  urls.push(`https://rdap.org/domain/${domain}`);
+
+  return urls;
+}
+
 function calculateDomainAge(creationDate: string): number {
   const created = new Date(creationDate);
   const now = new Date();
@@ -77,12 +111,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const domain = extractDomain(url);
 
   try {
-    // Try multiple RDAP sources
-    const rdapUrls = [
-      `https://rdap.org/domain/${domain}`,
-      `https://rdap.verisign.com/com/v1/domain/${domain}`,
-      `https://rdap.nic.it/domain/${domain}`,
-    ];
+    // Get RDAP URLs prioritized for this domain's TLD
+    const rdapUrls = getRdapUrlsForDomain(domain);
 
     let data: RdapResponse | null = null;
     let lastError: string = '';
@@ -98,12 +128,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (response.ok) {
           data = await response.json();
+          console.log(`RDAP success from: ${rdapUrl}`);
           break;
         } else {
           lastError = `${rdapUrl}: ${response.status}`;
+          console.log(`RDAP failed: ${lastError}`);
         }
       } catch (e) {
         lastError = `${rdapUrl}: ${e instanceof Error ? e.message : 'failed'}`;
+        console.log(`RDAP error: ${lastError}`);
       }
     }
 
@@ -112,18 +145,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Extract creation and expiration dates
+    // Different RDAP servers use different eventAction names
     let creationDate: string | null = null;
     let expirationDate: string | null = null;
 
     if (data.events) {
       for (const event of data.events) {
-        if (event.eventAction === 'registration') {
+        const action = event.eventAction.toLowerCase();
+        // Handle various naming conventions
+        if (action === 'registration' || action === 'created' || action === 'creation') {
           creationDate = event.eventDate;
-        } else if (event.eventAction === 'expiration') {
+        } else if (action === 'expiration' || action === 'expired') {
           expirationDate = event.eventDate;
         }
       }
     }
+
+    console.log(`Domain: ${domain}, Creation: ${creationDate}, Expiration: ${expirationDate}`);
 
     // Extract registrar
     let registrar = 'Sconosciuto';
