@@ -69,10 +69,26 @@ Il punteggio finale (0-100) combina controlli fissi e dinamici:
 | Check | Fonte | Stato |
 |-------|-------|-------|
 | Safe Browsing | Google Safe Browsing API | ✅ Attivo |
-| Recensioni | SerpApi (Trustpilot) | ✅ Attivo |
+| Recensioni | Multi-source (vedi sotto) | ✅ Attivo |
 | Età dominio | RDAP + who.is | ✅ Attivo |
 | Reputazione | IPQualityScore | ✅ Attivo |
 | SSL | Verifica diretta TLS | ✅ Attivo |
+
+### Fonti Recensioni (aggregate)
+
+Il sistema aggrega recensioni da più fonti per una valutazione più affidabile:
+
+| Fonte | Tipo |
+|-------|------|
+| Trustpilot | Recensioni verificate |
+| Recensioni Verificate | Recensioni certificate |
+| eKomi | Recensioni e-commerce |
+| Google | Knowledge Graph reviews |
+
+**Logica di aggregazione**:
+- Media pesata per numero di recensioni quando disponibile
+- Media semplice se mancano i conteggi
+- Il peso dinamico (10-30%) si basa sul totale delle recensioni aggregate
 
 ### Controlli Proprietari Trusty
 
