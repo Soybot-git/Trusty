@@ -82,17 +82,14 @@ Il sistema aggrega recensioni da più fonti per una valutazione più affidabile:
 |-------|------|
 | Trustpilot | Recensioni verificate |
 | Recensioni Verificate | Recensioni certificate |
-| eKomi | Recensioni e-commerce |
-| Google | Knowledge Graph reviews |
 
 **Logica di aggregazione**:
 - Media pesata per numero di recensioni quando disponibile
 - Media semplice se mancano i conteggi
 - Il peso dinamico (10-30%) si basa sul totale delle recensioni aggregate
 
-**Ottimizzazione API**: 2 chiamate SerpAPI per verifica
-- 1 query combinata (OR) per tutti i siti di recensioni
-- 1 query per Google Knowledge Graph
+**Ottimizzazione API**: 1 sola chiamata SerpAPI per verifica
+- Query combinata (OR) per tutti i siti di recensioni
 
 ### Controlli Proprietari Trusty
 

@@ -17,11 +17,6 @@ interface SerpApiResult {
       };
     };
   }>;
-  knowledge_graph?: {
-    rating?: number;
-    review_count?: number;
-    reviews_link?: string;
-  };
   error?: string;
 }
 
@@ -52,11 +47,6 @@ const REVIEW_SITES = [
     name: 'Recensioni Verificate',
     urlPattern: /recensioni-verificate\.com/,
     siteQuery: 'site:recensioni-verificate.com',
-  },
-  {
-    name: 'eKomi',
-    urlPattern: /ekomi\.it/,
-    siteQuery: 'site:ekomi.it',
   },
 ];
 
@@ -180,48 +170,13 @@ function extractRatingFromResult(result: SerpApiResult['organic_results'][0]): {
   return { rating, totalReviews };
 }
 
-// ==================== SEARCH FUNCTIONS ====================
+// ==================== SEARCH FUNCTION ====================
 
 /**
- * Search for Google Knowledge Graph reviews (separate query without site: filter)
+ * Search all review sites with a single combined OR query
+ * Uses 1 API call for all review sites
  */
-async function searchGoogleKnowledgeGraph(domain: string, apiKey: string): Promise<ReviewSource | null> {
-  const searchQuery = encodeURIComponent(`${domain}`);
-  const serpUrl = `https://serpapi.com/search.json?engine=google&q=${searchQuery}&api_key=${apiKey}&num=1&hl=it&gl=it`;
-
-  try {
-    const response = await fetch(serpUrl);
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data: SerpApiResult = await response.json();
-
-    if (data.error || !data.knowledge_graph) {
-      return null;
-    }
-
-    const kg = data.knowledge_graph;
-    if (kg.rating || kg.review_count) {
-      return {
-        name: 'Google',
-        rating: kg.rating || null,
-        totalReviews: kg.review_count || 0,
-        url: kg.reviews_link || null,
-      };
-    }
-  } catch (error) {
-    console.error('Error searching Google Knowledge Graph:', error);
-  }
-
-  return null;
-}
-
-/**
- * Search all review sites with combined OR query
- */
-async function searchReviewSites(domain: string, apiKey: string): Promise<ReviewSource[]> {
+async function searchAllReviewSources(domain: string, apiKey: string): Promise<ReviewSource[]> {
   // Build combined OR query for all review sites
   const sitesQuery = REVIEW_SITES.map(s => s.siteQuery).join(' OR ');
   const searchQuery = encodeURIComponent(`"${domain}" (${sitesQuery})`);
@@ -268,27 +223,6 @@ async function searchReviewSites(domain: string, apiKey: string): Promise<Review
     }
   } catch (error) {
     console.error('Error searching review sites:', error);
-  }
-
-  return sources;
-}
-
-/**
- * Search all review sources (review sites + Google Knowledge Graph)
- * Uses 2 API calls: one for review sites, one for Google KG
- */
-async function searchAllReviewSources(domain: string, apiKey: string): Promise<ReviewSource[]> {
-  // Run both searches in parallel
-  const [reviewSites, googleKG] = await Promise.all([
-    searchReviewSites(domain, apiKey),
-    searchGoogleKnowledgeGraph(domain, apiKey),
-  ]);
-
-  const sources: ReviewSource[] = [...reviewSites];
-
-  // Add Google KG if found
-  if (googleKG) {
-    sources.push(googleKG);
   }
 
   return sources;
