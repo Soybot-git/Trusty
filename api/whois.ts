@@ -40,16 +40,12 @@ function getTld(domain: string): string {
 function getRdapUrlsForDomain(domain: string): string[] {
   const tld = getTld(domain);
 
-  // TLD-specific RDAP servers (more reliable)
+  // TLD-specific RDAP servers that are known to work
   const tldServers: Record<string, string> = {
     'com': `https://rdap.verisign.com/com/v1/domain/${domain}`,
     'net': `https://rdap.verisign.com/net/v1/domain/${domain}`,
     'org': `https://rdap.publicinterestregistry.org/rdap/domain/${domain}`,
-    'it': `https://rdap.nic.it/domain/${domain}`,
     'eu': `https://rdap.eu/domain/${domain}`,
-    'de': `https://rdap.denic.de/domain/${domain}`,
-    'uk': `https://rdap.nominet.uk/uk/domain/${domain}`,
-    'fr': `https://rdap.nic.fr/domain/${domain}`,
     'nl': `https://rdap.sidn.nl/domain/${domain}`,
   };
 
@@ -64,6 +60,62 @@ function getRdapUrlsForDomain(domain: string): string[] {
   urls.push(`https://rdap.org/domain/${domain}`);
 
   return urls;
+}
+
+// Fallback: try to get creation date from who.is (scraping)
+async function getCreationDateFromWhoIs(domain: string): Promise<{ created: string | null; registrar: string | null }> {
+  try {
+    const response = await fetch(`https://who.is/whois/${domain}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    });
+
+    if (!response.ok) {
+      return { created: null, registrar: null };
+    }
+
+    const html = await response.text();
+
+    // Extract creation date using regex patterns
+    let created: string | null = null;
+    let registrar: string | null = null;
+
+    // Look for common patterns in WHOIS data
+    const createdPatterns = [
+      /Creation Date:\s*(\d{4}-\d{2}-\d{2})/i,
+      /Created:\s*(\d{4}-\d{2}-\d{2})/i,
+      /Created Date:\s*(\d{4}-\d{2}-\d{2})/i,
+      /Registration Date:\s*(\d{4}-\d{2}-\d{2})/i,
+      /Created:\s*(\d{2}\/\d{2}\/\d{4})/i,
+      /Created:\s*(\d{4}\.\d{2}\.\d{2})/i,
+    ];
+
+    for (const pattern of createdPatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        created = match[1];
+        // Normalize date format
+        if (created.includes('/')) {
+          const [day, month, year] = created.split('/');
+          created = `${year}-${month}-${day}`;
+        } else if (created.includes('.')) {
+          created = created.replace(/\./g, '-');
+        }
+        break;
+      }
+    }
+
+    // Extract registrar
+    const registrarMatch = html.match(/Registrar:\s*([^\n<]+)/i);
+    if (registrarMatch) {
+      registrar = registrarMatch[1].trim();
+    }
+
+    return { created, registrar };
+  } catch {
+    return { created: null, registrar: null };
+  }
 }
 
 function calculateDomainAge(creationDate: string): number {
@@ -140,8 +192,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    // If RDAP failed, try who.is fallback
     if (!data) {
-      throw new Error(`All RDAP sources failed. Last: ${lastError}`);
+      console.log('RDAP failed, trying who.is fallback...');
+      const whoIsData = await getCreationDateFromWhoIs(domain);
+
+      if (whoIsData.created) {
+        const domainAge = calculateDomainAge(whoIsData.created);
+        const { score, status, message } = getScoreFromAge(domainAge);
+
+        return res.status(200).json({
+          result: {
+            type: 'whois',
+            status,
+            score,
+            weight: 20,
+            message,
+            details: {
+              domainAge,
+              registrar: whoIsData.registrar || 'Sconosciuto',
+              creationDate: whoIsData.created,
+              expirationDate: null,
+              source: 'who.is',
+            },
+          },
+        });
+      }
+
+      throw new Error(`All RDAP sources failed and who.is fallback failed. Last RDAP: ${lastError}`);
     }
 
     // Extract creation and expiration dates
