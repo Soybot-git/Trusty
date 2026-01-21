@@ -392,7 +392,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       type: 'heuristics',
       status,
       score,
-      weight: 15,
+      weight: 10,
       message,
       details,
     },

@@ -91,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'ipqs',
         status: 'warning',
         score: 50,
-        weight: 15,
+        weight: 30,
         message: 'Verifica reputazione non disponibile',
         details: {
           error: 'API not configured',
@@ -131,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'ipqs',
         status,
         score,
-        weight: 15,
+        weight: 30,
         message,
         details: {
           riskScore: data.risk_score,
@@ -153,7 +153,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'ipqs',
         status: 'warning',
         score: 50,
-        weight: 15,
+        weight: 30,
         message: 'Impossibile verificare reputazione',
         details: {
           error: error instanceof Error ? error.message : 'Unknown error',

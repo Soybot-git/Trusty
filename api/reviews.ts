@@ -86,21 +86,11 @@ function formatReviewCount(count: number): string {
   return count.toString();
 }
 
-/**
- * Calculate dynamic weight based on total reviews across all sources
- * - < 50 reviews: 10% (few reviews might be fake)
- * - 50-200 reviews: 20% (moderate confidence)
- * - > 200 reviews: 30% (high confidence in real feedback)
- */
-function getReviewsWeight(totalReviews: number): number {
-  if (totalReviews < 50) {
-    return 10;
-  }
-  if (totalReviews <= 200) {
-    return 20;
-  }
-  return 30;
-}
+// Minimum reviews required to consider reviews valid
+const MIN_REVIEWS_THRESHOLD = 20;
+
+// Fixed weight for reviews (40%)
+const REVIEWS_WEIGHT = 40;
 
 /**
  * Identify which review site a URL belongs to
@@ -270,36 +260,36 @@ function aggregateReviews(sources: ReviewSource[]): AggregatedReviews {
 
 // ==================== SCORING ====================
 
-function getScoreFromAggregatedReviews(aggregated: AggregatedReviews): { score: number; status: string; message: string } {
+interface ReviewScore {
+  score: number;
+  status: string;
+  message: string;
+  insufficientReviews: boolean;
+}
+
+function getScoreFromAggregatedReviews(aggregated: AggregatedReviews): ReviewScore {
   const { aggregatedRating, totalReviews, sourceCount } = aggregated;
 
-  // No reviews found anywhere
-  if (aggregatedRating === null) {
+  // No reviews found or less than minimum threshold
+  if (aggregatedRating === null || totalReviews < MIN_REVIEWS_THRESHOLD) {
     return {
       score: 50,
       status: 'warning',
-      message: 'Nessuna recensione trovata online',
-    };
-  }
-
-  // Very few reviews (might be fake)
-  if (totalReviews > 0 && totalReviews < 5) {
-    return {
-      score: 50,
-      status: 'warning',
-      message: `Poche recensioni (${totalReviews}) - ${aggregatedRating}/5`,
+      message: 'Non ci sono abbastanza recensioni',
+      insufficientReviews: true,
     };
   }
 
   // Build message with source info
   const sourceInfo = sourceCount > 1 ? ` da ${sourceCount} fonti` : '';
-  const reviewInfo = totalReviews > 0 ? ` (${formatReviewCount(totalReviews)} recensioni${sourceInfo})` : sourceInfo;
+  const reviewInfo = ` (${formatReviewCount(totalReviews)} recensioni${sourceInfo})`;
 
   if (aggregatedRating >= 4.5) {
     return {
       score: 100,
       status: 'safe',
       message: `Eccellente: ${aggregatedRating}/5${reviewInfo}`,
+      insufficientReviews: false,
     };
   }
 
@@ -308,6 +298,7 @@ function getScoreFromAggregatedReviews(aggregated: AggregatedReviews): { score: 
       score: 90,
       status: 'safe',
       message: `Molto buono: ${aggregatedRating}/5${reviewInfo}`,
+      insufficientReviews: false,
     };
   }
 
@@ -316,6 +307,7 @@ function getScoreFromAggregatedReviews(aggregated: AggregatedReviews): { score: 
       score: 75,
       status: 'safe',
       message: `Buono: ${aggregatedRating}/5${reviewInfo}`,
+      insufficientReviews: false,
     };
   }
 
@@ -324,6 +316,7 @@ function getScoreFromAggregatedReviews(aggregated: AggregatedReviews): { score: 
       score: 60,
       status: 'warning',
       message: `Nella media: ${aggregatedRating}/5${reviewInfo}`,
+      insufficientReviews: false,
     };
   }
 
@@ -332,6 +325,7 @@ function getScoreFromAggregatedReviews(aggregated: AggregatedReviews): { score: 
       score: 35,
       status: 'warning',
       message: `Valutazione bassa: ${aggregatedRating}/5${reviewInfo}`,
+      insufficientReviews: false,
     };
   }
 
@@ -339,6 +333,7 @@ function getScoreFromAggregatedReviews(aggregated: AggregatedReviews): { score: 
     score: 15,
     status: 'danger',
     message: `Valutazione pessima: ${aggregatedRating}/5${reviewInfo}`,
+    insufficientReviews: false,
   };
 }
 
@@ -373,13 +368,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'reviews',
         status: 'warning',
         score: 50,
-        weight: 10,
+        weight: REVIEWS_WEIGHT,
         message: 'Verifica recensioni non disponibile',
         details: {
           aggregatedRating: null,
           totalReviews: 0,
           sourceCount: 0,
           sources: [],
+          insufficientReviews: true,
           error: 'API not configured',
         },
       },
@@ -392,8 +388,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Aggregate results
     const aggregated = aggregateReviews(sources);
-    const { score, status, message } = getScoreFromAggregatedReviews(aggregated);
-    const weight = getReviewsWeight(aggregated.totalReviews);
+    const { score, status, message, insufficientReviews } = getScoreFromAggregatedReviews(aggregated);
 
     // Filter sources for response (only include those with data)
     const sourcesWithData = sources.filter((s) => s.rating !== null || s.url !== null);
@@ -403,7 +398,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'reviews',
         status,
         score,
-        weight,
+        weight: REVIEWS_WEIGHT,
         message,
         details: {
           aggregatedRating: aggregated.aggregatedRating,
@@ -415,6 +410,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             totalReviews: s.totalReviews,
             url: s.url,
           })),
+          insufficientReviews,
         },
       },
     });
@@ -426,13 +422,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         type: 'reviews',
         status: 'warning',
         score: 50,
-        weight: 10,
+        weight: REVIEWS_WEIGHT,
         message: 'Impossibile verificare recensioni',
         details: {
           aggregatedRating: null,
           totalReviews: 0,
           sourceCount: 0,
           sources: [],
+          insufficientReviews: true,
           error: error instanceof Error ? error.message : 'Unknown error',
         },
       },

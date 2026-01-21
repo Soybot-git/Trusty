@@ -40,29 +40,28 @@ npm start
 
 ## Algoritmo Trust Score
 
-Il punteggio finale (0-100) combina controlli fissi e dinamici:
+Il punteggio finale (0-100) combina diversi controlli:
 
 ### Distribuzione Pesi
 
 | Check | Peso | Note |
 |-------|------|------|
 | Safe Browsing | 0% | Filtro preliminare (blocco se malware) |
-| WHOIS (Età dominio) | 15% | Fisso |
-| SSL | 15% | Fisso |
-| Euristiche | 15% | Fisso |
-| Recensioni | 10-30% | Variabile in base al numero di recensioni |
-| IPQS (Reputazione) | 45-25% | Complementare (55% - peso recensioni) |
-| **TOTALE** | **100%** | Sempre bilanciato |
+| WHOIS (Età dominio) | 10% | Fisso |
+| SSL | 10% | Fisso |
+| Euristiche | 10% | Fisso |
+| IPQS (Reputazione) | 30% | Fisso |
+| Recensioni | 40% | Fisso, richiede minimo 20 recensioni |
+| **TOTALE** | **100%** | |
 
-### Logica Reviews + IPQS (complementare)
+### Logica Recensioni
 
-| Numero recensioni | Peso Reviews | Peso IPQS |
-|-------------------|--------------|-----------|
-| < 50 | 10% | 45% |
-| 50 - 200 | 20% | 35% |
-| > 200 | 30% | 25% |
+| Condizione | Comportamento |
+|------------|---------------|
+| < 20 recensioni | "Non ci sono abbastanza recensioni" + max score 60 |
+| ≥ 20 recensioni | Score normale basato sul rating (fino a 100) |
 
-**Razionale**: poche recensioni potrebbero essere false → IPQS compensa; molte recensioni = feedback reale affidabile → contano di più.
+**Razionale**: siti senza recensioni sufficienti non possono ottenere un punteggio superiore a 60 (sufficienza), indipendentemente dagli altri controlli positivi.
 
 ### API Esterne
 
@@ -86,14 +85,14 @@ Il sistema aggrega recensioni da più fonti per una valutazione più affidabile:
 **Logica di aggregazione**:
 - Media pesata per numero di recensioni quando disponibile
 - Media semplice se mancano i conteggi
-- Il peso dinamico (10-30%) si basa sul totale delle recensioni aggregate
+- Minimo 20 recensioni per essere considerate valide
 
 **Ottimizzazione API**: 1 sola chiamata SerpAPI per verifica
 - Query combinata (OR) per tutti i siti di recensioni
 
 ### Controlli Proprietari Trusty
 
-**Dettaglio controlli euristici (15%):**
+**Dettaglio controlli euristici (10%):**
 - **Typosquatting** — Rileva domini che imitano brand famosi (es. `amaz0n.com`, `paypa1.com`)
 - **TLD sospetti** — Penalizza estensioni spesso usate per truffe (`.xyz`, `.top`, `.click`)
 - **Pattern sospetti** — Troppi trattini, numeri, keyword come "free", "gratis", "win"
@@ -108,6 +107,7 @@ Il sistema aggrega recensioni da più fonti per una valutazione più affidabile:
 ### Override di sicurezza
 - Malware/phishing rilevato → blocco immediato (score = 0)
 - Dominio < 30 giorni → max score 50
+- Recensioni insufficienti (< 20) → max score 60
 
 ## Struttura Progetto
 

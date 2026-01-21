@@ -24,12 +24,31 @@ function isHeuristicsDetails(details: CheckDetails | undefined): details is Heur
   return details !== undefined && 'suspiciousPayments' in details && 'hasVatNumber' in details;
 }
 
+interface ReviewsDetailsWithInsufficient {
+  insufficientReviews?: boolean;
+  totalReviews?: number;
+}
+
+function hasInsufficientReviews(details: CheckDetails | undefined): boolean {
+  if (!details) return true;
+  const reviewDetails = details as ReviewsDetailsWithInsufficient;
+  return reviewDetails.insufficientReviews === true || (reviewDetails.totalReviews !== undefined && reviewDetails.totalReviews < 20);
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class ScoringService {
   /**
    * Calculate final trust score from all check results
+   *
+   * Weight distribution:
+   * - WHOIS: 10%
+   * - SSL: 10%
+   * - Heuristics: 10%
+   * - IPQS: 30%
+   * - Reviews: 40%
+   * - Safe Browsing: 0% (filter only)
    */
   calculateScore(url: string, checks: CheckResult[]): TrustResult {
     const domain = extractDomain(url);
@@ -38,21 +57,13 @@ export class ScoringService {
     const safeBrowsingCheck = checks.find((c) => c.type === 'safe-browsing');
     const whoisCheck = checks.find((c) => c.type === 'whois');
     const heuristicsCheck = checks.find((c) => c.type === 'heuristics');
+    const reviewsCheck = checks.find((c) => c.type === 'reviews');
 
     // Override: Malware detected = score 0
     if (safeBrowsingCheck && isSafeBrowsingDetails(safeBrowsingCheck.details)) {
       if (safeBrowsingCheck.details.isMalware || safeBrowsingCheck.details.isPhishing) {
         return this.createResult(url, domain, 0, checks);
       }
-    }
-
-    // Calculate IPQS complementary weight based on reviews weight
-    // Reviews: 10-30%, IPQS: 45-25% (total always 55%)
-    const reviewsCheck = checks.find((c) => c.type === 'reviews');
-    const ipqsCheck = checks.find((c) => c.type === 'ipqs');
-    if (reviewsCheck && ipqsCheck) {
-      const reviewsWeight = reviewsCheck.weight;
-      ipqsCheck.weight = 55 - reviewsWeight;
     }
 
     // Calculate weighted score
@@ -80,6 +91,11 @@ export class ScoringService {
       if (heuristicsCheck.details.suspiciousPayments) {
         finalScore = Math.max(0, finalScore - 20);
       }
+    }
+
+    // Insufficient reviews (< 20) = max score 60
+    if (reviewsCheck && hasInsufficientReviews(reviewsCheck.details)) {
+      finalScore = Math.min(finalScore, 60);
     }
 
     return this.createResult(url, domain, Math.round(finalScore), checks);
