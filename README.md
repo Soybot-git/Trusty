@@ -54,9 +54,16 @@ Il punteggio finale (0-100) combina due tipologie di controlli:
 
 ### Controlli Proprietari Trusty
 
-| Check | Peso | Descrizione |
-|-------|------|-------------|
-| Euristiche | 10% | Typosquatting, TLD sospetti, pattern anomali, indicatori italiani |
+| Check | Peso | Stato |
+|-------|------|-------|
+| Euristiche | 10% | ✅ Attivo |
+
+**Dettaglio controlli euristici:**
+- **Typosquatting** — Rileva domini che imitano brand famosi (es. `amaz0n.com`, `paypa1.com`)
+- **TLD sospetti** — Penalizza estensioni spesso usate per truffe (`.xyz`, `.top`, `.click`)
+- **Pattern sospetti** — Troppi trattini, numeri, keyword come "free", "gratis", "win"
+- **Lunghezza dominio** — Domini eccessivamente lunghi sono sospetti
+- **Brand conosciuti** — 60+ brand italiani e internazionali riconosciuti (bonus)
 
 ### Soglie Semaforo
 - **Safe**: score ≥ 70
