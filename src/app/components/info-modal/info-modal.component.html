@@ -7,15 +7,25 @@
 
     <div class="modal-body">
       <section class="info-section">
-        <h3>🔍 Cosa analizziamo</h3>
-        <p>Trusty esegue automaticamente <strong>6 controlli</strong> su ogni sito:</p>
+        <h3>🌐 Verifiche con API esterne</h3>
+        <p>Trusty interroga <strong>servizi esterni affidabili</strong> per ottenere dati verificati:</p>
         <ul>
-          <li><strong>Google Safe Browsing</strong> — Verifica se il sito è segnalato per malware o phishing</li>
-          <li><strong>Età del dominio</strong> — I siti truffa sono spesso molto recenti</li>
-          <li><strong>Certificato SSL</strong> — Connessione sicura e crittografata</li>
-          <li><strong>Reputazione IP</strong> — Analisi del server che ospita il sito</li>
-          <li><strong>Recensioni online</strong> — Valutazioni su Trustpilot e altre piattaforme</li>
-          <li><strong>Indicatori italiani</strong> — Presenza di P.IVA, metodi di pagamento sicuri, pagine legali</li>
+          <li><strong>Google Safe Browsing</strong> — Database Google di siti con malware o phishing</li>
+          <li><strong>Età del dominio (RDAP)</strong> — Quando è stato registrato il dominio</li>
+          <li><strong>Certificato SSL</strong> — Verifica diretta della connessione sicura</li>
+          <li><strong>Reputazione dominio</strong> — Analisi fraud score e attività sospette</li>
+          <li><strong>Recensioni online</strong> — Valutazioni su Trustpilot</li>
+        </ul>
+      </section>
+
+      <section class="info-section">
+        <h3>🔍 Controlli proprietari Trusty</h3>
+        <p>Analisi sviluppate da noi per il <strong>mercato italiano</strong>:</p>
+        <ul>
+          <li><strong>Typosquatting</strong> — Domini simili a brand famosi (es. amaz0n.com)</li>
+          <li><strong>TLD sospetti</strong> — Estensioni spesso usate per truffe (.xyz, .top)</li>
+          <li><strong>Pattern sospetti</strong> — Caratteri e strutture anomale nel dominio</li>
+          <li><strong>Indicatori italiani</strong> — Presenza P.IVA, sede legale, pagine obbligatorie</li>
         </ul>
       </section>
 
@@ -36,7 +46,7 @@
             <span class="score-weight">20%</span>
           </div>
           <div class="score-item">
-            <span class="score-label">Reputazione IP</span>
+            <span class="score-label">Reputazione</span>
             <span class="score-weight">15%</span>
           </div>
           <div class="score-item">
@@ -44,7 +54,7 @@
             <span class="score-weight">10%</span>
           </div>
           <div class="score-item">
-            <span class="score-label">Indicatori IT</span>
+            <span class="score-label">Controlli Trusty</span>
             <span class="score-weight">10%</span>
           </div>
         </div>
