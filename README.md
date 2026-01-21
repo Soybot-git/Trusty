@@ -47,7 +47,7 @@ Il punteggio finale (0-100) combina due tipologie di controlli:
 | Check | Peso | Fonte | Stato |
 |-------|------|-------|-------|
 | Safe Browsing | 25% | Google Safe Browsing API | ✅ Attivo |
-| Recensioni | 25% | SerpApi (Trustpilot) | ⏳ Da configurare |
+| Recensioni | 25% | SerpApi (Trustpilot) | ✅ Attivo |
 | Età dominio | 15% | RDAP + who.is | ✅ Attivo |
 | Reputazione | 15% | IPQualityScore | ✅ Attivo |
 | SSL | 10% | Verifica diretta TLS | ✅ Attivo |
@@ -106,8 +106,8 @@ Configurare in Vercel Dashboard → Settings → Environment Variables:
 | Variabile | Descrizione | Obbligatoria |
 |-----------|-------------|--------------|
 | `GOOGLE_SAFE_BROWSING_KEY` | API key Google Safe Browsing | ✅ Sì |
-| `IPQS_API_KEY` | API key IPQualityScore | Opzionale |
-| `SERP_API_KEY` | API key SerpApi | Opzionale |
+| `IPQS_API_KEY` | API key IPQualityScore | ✅ Sì |
+| `SERP_API_KEY` | API key SerpApi | ✅ Sì |
 
 ## Deploy
 
