@@ -5,11 +5,6 @@
   "outputDirectory": "dist/trusty/browser",
   "installCommand": "npm install",
   "framework": null,
-  "functions": {
-    "api/*.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
