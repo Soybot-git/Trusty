@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <path
-    d="M16 2L4 7v8c0 7.73 5.12 14.95 12 17 6.88-2.05 12-9.27 12-17V7L16 2z"
-    fill="#00bf63"
-  />
-  <path
-    d="M14 17.41l-3.29-3.29-1.41 1.41L14 20.24l8.71-8.71-1.41-1.41L14 17.41z"
-    fill="white"
-  />
+<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+ <!-- Green shield -->
+
+ <!-- Letter "t" -->
+ <g>
+  <title>Layer 1</title>
+  <path id="svg_1" fill="#00bf63" d="m16,2l-12,5l0,8c0,7.73 5.12,14.95 12,17c6.88,-2.05 12,-9.27 12,-17l0,-8l-12,-5z"/>
+  <text id="svg_2" text-anchor="middle" fill="white" font-weight="bold" font-size="24" font-family="Arial, sans-serif" y="26.37397" x="16">T</text>
+ </g>
 </svg>
