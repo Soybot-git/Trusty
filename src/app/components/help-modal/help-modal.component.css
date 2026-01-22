@@ -95,6 +95,28 @@
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.section-icon.success {
+  color: var(--primary);
+}
+
+.section-icon.danger {
+  color: #dc2626;
+}
+
+.section-icon.tip {
+  color: var(--primary-dark);
 }
 
 .info-section p {

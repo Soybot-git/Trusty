@@ -12,6 +12,20 @@
       (infoClick)="showInfoModal = true"
     />
 
+    @if (!isLoading && !result && !error) {
+      <div class="empty-state">
+        <div class="shield-container">
+          <svg class="shield-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path class="shield-body" d="M32 4L8 14V30C8 46.5 18.5 56.5 32 60C45.5 56.5 56 46.5 56 30V14L32 4Z"
+                  stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path class="checkmark" d="M22 32L29 39L42 26"
+                  stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="empty-state-text">Inserisci un link per iniziare la verifica</p>
+      </div>
+    }
+
     @if (isLoading) {
       <app-loading message="Analisi in corso" />
     }

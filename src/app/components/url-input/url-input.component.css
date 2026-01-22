@@ -167,12 +167,31 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  padding: 8px 4px;
-  transition: color 0.2s ease;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  border-radius: 8px;
+}
+
+.info-link::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 12px;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+  transition: width 0.3s ease;
 }
 
 .info-link:hover {
   color: var(--primary);
+  background: rgba(0, 191, 99, 0.08);
+}
+
+.info-link:hover::after {
+  width: calc(100% - 24px);
 }
 
 .link-separator {

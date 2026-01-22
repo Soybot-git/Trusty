@@ -1,38 +1,13 @@
 <div class="loading-container">
   <div class="loading-animation">
-    <!-- Shop icon -->
-    <div class="shop-icon">
+    <div class="shield-loader">
       <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Shop roof/awning -->
-        <path d="M8 24L12 12H52L56 24" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M8 24C8 24 8 28 12 28C16 28 16 24 16 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-        <path d="M16 24C16 24 16 28 20 28C24 28 24 24 24 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-        <path d="M24 24C24 24 24 28 28 28C32 28 32 24 32 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-        <path d="M32 24C32 24 32 28 36 28C40 28 40 24 40 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-        <path d="M40 24C40 24 40 28 44 28C48 28 48 24 48 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-        <path d="M48 24C48 24 48 28 52 28C56 28 56 24 56 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-        <!-- Shop body -->
-        <rect x="12" y="28" width="40" height="24" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
-        <!-- Door -->
-        <rect x="26" y="36" width="12" height="16" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
-        <circle cx="35" cy="44" r="1.5" fill="currentColor"/>
+        <path class="shield-body" d="M32 4L8 14V30C8 46.5 18.5 56.5 32 60C45.5 56.5 56 46.5 56 30V14L32 4Z"
+              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path class="checkmark" d="M22 32L29 39L42 26"
+              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-
-    <!-- Magnifying glass orbit -->
-    <div class="magnifier-orbit">
-      <div class="magnifier">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="6" stroke="currentColor" stroke-width="2.5"/>
-          <path d="M14.5 14.5L19 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- Shine effect -->
-          <path d="M7 7L8.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-        </svg>
-      </div>
-    </div>
-
-    <!-- Scan lines effect -->
-    <div class="scan-line"></div>
   </div>
 
   <div class="loading-text">{{ message }}</div>
