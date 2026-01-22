@@ -242,9 +242,23 @@
   gap: 12px;
   padding: 14px 16px;
   border-radius: 14px;
-  background: rgba(248, 250, 252, 0.8);
   animation: checkSlideIn 0.4s ease-out both;
   transition: all 0.2s ease;
+}
+
+.check-check {
+  background: linear-gradient(135deg, rgba(0, 191, 99, 0.08), rgba(0, 153, 80, 0.05));
+  border: 1px solid rgba(0, 191, 99, 0.15);
+}
+
+.check-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.check-danger {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));
+  border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
 @keyframes checkSlideIn {
@@ -258,8 +272,21 @@
   }
 }
 
-.check-item:hover {
-  background: rgba(248, 250, 252, 1);
+.check-check:hover {
+  background: linear-gradient(135deg, rgba(0, 191, 99, 0.12), rgba(0, 153, 80, 0.08));
+  border-color: rgba(0, 191, 99, 0.25);
+  transform: translateX(4px);
+}
+
+.check-warning:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.08));
+  border-color: rgba(245, 158, 11, 0.25);
+  transform: translateX(4px);
+}
+
+.check-danger:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.08));
+  border-color: rgba(239, 68, 68, 0.25);
   transform: translateX(4px);
 }
 
@@ -274,17 +301,14 @@
 }
 
 .check-check .check-icon-wrapper {
-  background: linear-gradient(135deg, #E6FFF2, #CCFFE6);
   color: #009950;
 }
 
 .check-warning .check-icon-wrapper {
-  background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
   color: #D97706;
 }
 
 .check-danger .check-icon-wrapper {
-  background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
   color: #DC2626;
 }
 
