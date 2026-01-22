@@ -44,10 +44,10 @@ export class ScoringService {
    *
    * Weight distribution:
    * - WHOIS: 10%
-   * - SSL: 10%
+   * - SSL: 20%
    * - Heuristics: 10%
    * - IPQS: 30%
-   * - Reviews: 40%
+   * - Reviews: 30%
    * - Safe Browsing: 0% (filter only)
    */
   calculateScore(url: string, checks: CheckResult[]): TrustResult {

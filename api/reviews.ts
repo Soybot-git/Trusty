@@ -89,8 +89,8 @@ function formatReviewCount(count: number): string {
 // Minimum reviews required to consider reviews valid
 const MIN_REVIEWS_THRESHOLD = 20;
 
-// Fixed weight for reviews (40%)
-const REVIEWS_WEIGHT = 40;
+// Fixed weight for reviews (30%)
+const REVIEWS_WEIGHT = 30;
 
 /**
  * Identify which review site a URL belongs to

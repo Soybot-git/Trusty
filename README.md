@@ -47,11 +47,11 @@ Il punteggio finale (0-100) combina diversi controlli:
 | Check | Peso | Note |
 |-------|------|------|
 | Safe Browsing | 0% | Filtro preliminare (blocco se malware) |
-| WHOIS (Età dominio) | 10% | Fisso |
-| SSL | 10% | Fisso |
-| Euristiche | 10% | Fisso |
 | IPQS (Reputazione) | 30% | Fisso |
-| Recensioni | 40% | Fisso, richiede minimo 20 recensioni |
+| Recensioni | 30% | Fisso, richiede minimo 20 recensioni |
+| SSL | 20% | Fisso |
+| WHOIS (Età dominio) | 10% | Fisso |
+| Euristiche | 10% | Fisso |
 | **TOTALE** | **100%** | |
 
 ### Logica Recensioni
