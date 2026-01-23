@@ -70,7 +70,8 @@
 }
 
 .share-btn .icon {
-  font-size: 22px;
+  width: 24px;
+  height: 24px;
 }
 
 .share-btn .label {

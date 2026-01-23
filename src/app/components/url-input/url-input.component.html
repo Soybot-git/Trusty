@@ -20,7 +20,7 @@
   <button
     class="verify-btn"
     (click)="onSubmit()"
-    [disabled]="!url.trim() || isLoading"
+    [disabled]="!canSubmit"
   >
     @if (isLoading) {
       <span class="spinner"></span>
@@ -28,6 +28,11 @@
       VERIFICA
     }
   </button>
+  @if (showError) {
+    <div class="error-message">
+      Inserisci un indirizzo web valido (es. amazon.it)
+    </div>
+  }
   <div class="info-links">
     <button class="info-link" (click)="helpClick.emit()">
       Cosa devo inserire?

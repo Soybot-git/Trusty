@@ -17,10 +17,25 @@ export class UrlInputComponent {
 
   url = '';
 
+  get isValidUrl(): boolean {
+    const trimmed = this.url.trim();
+    if (!trimmed) return true; // Campo vuoto non mostra errore
+    return trimmed.includes('.') && !trimmed.includes(' ');
+  }
+
+  get canSubmit(): boolean {
+    const trimmed = this.url.trim();
+    return trimmed.length > 0 && this.isValidUrl && !this.isLoading;
+  }
+
+  get showError(): boolean {
+    return this.url.trim().length > 0 && !this.isValidUrl;
+  }
+
   onSubmit(): void {
-    const trimmedUrl = this.url.trim();
-    if (trimmedUrl && !this.isLoading) {
-      this.urlSubmit.emit(trimmedUrl);
+    if (this.canSubmit) {
+      this.urlSubmit.emit(this.url.trim());
+      this.url = '';
     }
   }
 

@@ -1,12 +1,24 @@
 <div class="loading-container">
   <div class="loading-animation">
     <div class="shield-loader">
-      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path class="shield-body" d="M32 4L8 14V30C8 46.5 18.5 56.5 32 60C45.5 56.5 56 46.5 56 30V14L32 4Z"
-              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <path class="checkmark" d="M22 32L29 39L42 26"
-              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <!-- Front face - Green shield with check -->
+      <div class="shield-face shield-front">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path class="shield-body" d="M32 4L8 14V30C8 46.5 18.5 56.5 32 60C45.5 56.5 56 46.5 56 30V14L32 4Z"
+                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="checkmark" d="M22 32L29 39L42 26"
+                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <!-- Back face - Red shield with X -->
+      <div class="shield-face shield-back">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path class="shield-body-red" d="M32 4L8 14V30C8 46.5 18.5 56.5 32 60C45.5 56.5 56 46.5 56 30V14L32 4Z"
+                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="xmark" d="M24 24L40 40M40 24L24 40"
+                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
   </div>
 
