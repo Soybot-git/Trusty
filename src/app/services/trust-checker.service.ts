@@ -1,9 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 import { CheckResult, TrustResult } from '../models';
 import { ScoringService } from './scoring.service';
 import { environment } from '../../environments/environment';
+
+// Cache configuration
+const CACHE_PREFIX = 'trusty_cache_';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+interface CacheEntry {
+  result: TrustResult;
+  timestamp: number;
+}
 
 // Mock services
 import {
@@ -52,6 +61,15 @@ export class TrustCheckerService {
    */
   check(url: string): Observable<TrustResult> {
     const normalizedUrl = this.normalizeUrl(url);
+    const domain = this.extractDomain(normalizedUrl);
+
+    // Check localStorage cache first
+    const cached = this.getCachedResult(domain);
+    if (cached) {
+      console.log(`Client cache HIT: ${domain}`);
+      return of(cached);
+    }
+    console.log(`Client cache MISS: ${domain}`);
 
     // Get the appropriate service based on environment
     const useMocks = environment.useMocks;
@@ -94,8 +112,95 @@ export class TrustCheckerService {
     ];
 
     return forkJoin(checks$).pipe(
-      map((results) => this.scoringService.calculateScore(normalizedUrl, results))
+      map((results) => this.scoringService.calculateScore(normalizedUrl, results)),
+      tap((result) => this.setCachedResult(domain, result))
     );
+  }
+
+  /**
+   * Get cached result from localStorage
+   */
+  private getCachedResult(domain: string): TrustResult | null {
+    try {
+      const key = CACHE_PREFIX + domain.toLowerCase();
+      const cached = localStorage.getItem(key);
+
+      if (!cached) {
+        return null;
+      }
+
+      const entry: CacheEntry = JSON.parse(cached);
+      const now = Date.now();
+
+      // Check if cache is still valid
+      if (now - entry.timestamp > CACHE_TTL_MS) {
+        localStorage.removeItem(key);
+        return null;
+      }
+
+      return entry.result;
+    } catch (error) {
+      console.error('Cache read error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Save result to localStorage cache
+   */
+  private setCachedResult(domain: string, result: TrustResult): void {
+    try {
+      const key = CACHE_PREFIX + domain.toLowerCase();
+      const entry: CacheEntry = {
+        result,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(key, JSON.stringify(entry));
+      console.log(`Client cache SET: ${domain}`);
+    } catch (error) {
+      console.error('Cache write error:', error);
+      // localStorage might be full, try to clean old entries
+      this.cleanOldCacheEntries();
+    }
+  }
+
+  /**
+   * Clean old cache entries to free up space
+   */
+  private cleanOldCacheEntries(): void {
+    try {
+      const now = Date.now();
+      const keysToRemove: string[] = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(CACHE_PREFIX)) {
+          const cached = localStorage.getItem(key);
+          if (cached) {
+            const entry: CacheEntry = JSON.parse(cached);
+            if (now - entry.timestamp > CACHE_TTL_MS) {
+              keysToRemove.push(key);
+            }
+          }
+        }
+      }
+
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+    } catch (error) {
+      console.error('Cache cleanup error:', error);
+    }
+  }
+
+  /**
+   * Extract domain from URL
+   */
+  private extractDomain(url: string): string {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace(/^www\./, '');
+    } catch {
+      return url.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+    }
   }
 
   /**

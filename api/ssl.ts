@@ -1,6 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as tls from 'tls';
 import * as net from 'net';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache';
+
+interface SslResult {
+  type: string;
+  status: string;
+  score: number;
+  weight: number;
+  message: string;
+  details: {
+    isValid: boolean;
+    issuer?: string;
+    subject?: string;
+    expiresAt?: string;
+    daysUntilExpiry?: number;
+    protocol?: string;
+    error?: string;
+  };
+}
 
 interface CertificateInfo {
   isValid: boolean;
@@ -136,28 +154,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const domain = extractDomain(url);
+  const cacheKey = getCacheKey('ssl', domain);
+
+  // Check cache first
+  const cached = await getCached<SslResult>(cacheKey);
+  if (cached) {
+    return res.status(200).json({ result: cached });
+  }
 
   try {
     const cert = await getCertificateInfo(domain);
     const { score, status, message } = getScoreFromCertificate(cert);
 
-    return res.status(200).json({
-      result: {
-        type: 'ssl',
-        status,
-        score,
-        weight: 20,
-        message,
-        details: {
-          isValid: cert.isValid,
-          issuer: cert.issuer,
-          subject: cert.subject,
-          expiresAt: cert.validTo,
-          daysUntilExpiry: cert.daysUntilExpiry,
-          protocol: cert.protocol,
-        },
+    const result: SslResult = {
+      type: 'ssl',
+      status,
+      score,
+      weight: 20,
+      message,
+      details: {
+        isValid: cert.isValid,
+        issuer: cert.issuer,
+        subject: cert.subject,
+        expiresAt: cert.validTo,
+        daysUntilExpiry: cert.daysUntilExpiry,
+        protocol: cert.protocol,
       },
-    });
+    };
+
+    // Cache the result
+    await setCache(cacheKey, result, CACHE_TTL.SSL);
+
+    return res.status(200).json({ result });
   } catch (error) {
     console.error('SSL check error:', error);
 

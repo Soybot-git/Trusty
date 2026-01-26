@@ -1,4 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache';
+
+interface IpqsResult {
+  type: string;
+  status: string;
+  score: number;
+  weight: number;
+  message: string;
+  details: {
+    riskScore?: number;
+    unsafe?: boolean;
+    suspicious?: boolean;
+    phishing?: boolean;
+    malware?: boolean;
+    parking?: boolean;
+    spamming?: boolean;
+    category?: string | null;
+    error?: string;
+  };
+}
 
 interface IPQSResponse {
   success: boolean;
@@ -27,6 +47,16 @@ function normalizeUrl(url: string): string {
     normalized = 'https://' + normalized;
   }
   return normalized;
+}
+
+function extractDomain(url: string): string {
+  try {
+    const normalized = normalizeUrl(url);
+    const urlObj = new URL(normalized);
+    return urlObj.hostname.replace(/^www\./, '');
+  } catch {
+    return url.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+  }
 }
 
 function getScoreFromRiskScore(riskScore: number, data: IPQSResponse): { score: number; status: string; message: string } {
@@ -102,6 +132,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const normalizedUrl = normalizeUrl(url);
   const encodedUrl = encodeURIComponent(normalizedUrl);
+  const domain = extractDomain(url);
+  const cacheKey = getCacheKey('ipqs', domain);
+
+  // Check cache first
+  const cached = await getCached<IpqsResult>(cacheKey);
+  if (cached) {
+    return res.status(200).json({ result: cached });
+  }
 
   try {
     const response = await fetch(
@@ -126,25 +164,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { score, status, message } = getScoreFromRiskScore(data.risk_score, data);
 
-    return res.status(200).json({
-      result: {
-        type: 'ipqs',
-        status,
-        score,
-        weight: 30,
-        message,
-        details: {
-          riskScore: data.risk_score,
-          unsafe: data.unsafe,
-          suspicious: data.suspicious,
-          phishing: data.phishing,
-          malware: data.malware,
-          parking: data.parking,
-          spamming: data.spamming,
-          category: data.category || null,
-        },
+    const result: IpqsResult = {
+      type: 'ipqs',
+      status,
+      score,
+      weight: 30,
+      message,
+      details: {
+        riskScore: data.risk_score,
+        unsafe: data.unsafe,
+        suspicious: data.suspicious,
+        phishing: data.phishing,
+        malware: data.malware,
+        parking: data.parking,
+        spamming: data.spamming,
+        category: data.category || null,
       },
-    });
+    };
+
+    // Cache the result
+    await setCache(cacheKey, result, CACHE_TTL.IPQS);
+
+    return res.status(200).json({ result });
   } catch (error) {
     console.error('IPQS error:', error);
 

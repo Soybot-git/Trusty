@@ -1,4 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache';
+
+interface SafeBrowsingResult {
+  type: string;
+  status: string;
+  score: number;
+  weight: number;
+  message: string;
+  details: {
+    isMalware: boolean;
+    isPhishing: boolean;
+    threats: string[];
+    error?: string;
+  };
+}
 
 interface ThreatMatch {
   threatType: string;
@@ -17,6 +32,16 @@ function normalizeUrl(url: string): string {
     normalized = 'https://' + normalized;
   }
   return normalized;
+}
+
+function extractDomain(url: string): string {
+  try {
+    const normalized = normalizeUrl(url);
+    const urlObj = new URL(normalized);
+    return urlObj.hostname.replace(/^www\./, '');
+  } catch {
+    return url.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -61,6 +86,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const normalizedUrl = normalizeUrl(url);
+  const domain = extractDomain(url);
+  const cacheKey = getCacheKey('safe-browsing', domain);
+
+  // Check cache first
+  const cached = await getCached<SafeBrowsingResult>(cacheKey);
+  if (cached) {
+    return res.status(200).json({ result: cached });
+  }
 
   try {
     const response = await fetch(
@@ -114,37 +147,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       message += messages.join(', ');
 
-      return res.status(200).json({
-        result: {
-          type: 'safe-browsing',
-          status: 'danger',
-          score: 0,
-          weight: 0,
-          message,
-          details: {
-            isMalware,
-            isPhishing,
-            threats: threatTypes,
-          },
+      const result: SafeBrowsingResult = {
+        type: 'safe-browsing',
+        status: 'danger',
+        score: 0,
+        weight: 0,
+        message,
+        details: {
+          isMalware,
+          isPhishing,
+          threats: threatTypes,
         },
-      });
+      };
+
+      // Cache dangerous results with shorter TTL (1 hour) to allow re-check
+      await setCache(cacheKey, result, 60 * 60);
+
+      return res.status(200).json({ result });
     }
 
     // No threats found - site is safe
-    return res.status(200).json({
-      result: {
-        type: 'safe-browsing',
-        status: 'safe',
-        score: 100,
-        weight: 0,
-        message: 'Nessuna minaccia rilevata da Google',
-        details: {
-          isMalware: false,
-          isPhishing: false,
-          threats: [],
-        },
+    const result: SafeBrowsingResult = {
+      type: 'safe-browsing',
+      status: 'safe',
+      score: 100,
+      weight: 0,
+      message: 'Nessuna minaccia rilevata da Google',
+      details: {
+        isMalware: false,
+        isPhishing: false,
+        threats: [],
       },
-    });
+    };
+
+    // Cache safe results
+    await setCache(cacheKey, result, CACHE_TTL.SAFE_BROWSING);
+
+    return res.status(200).json({ result });
   } catch (error) {
     console.error('Safe Browsing API error:', error);
 

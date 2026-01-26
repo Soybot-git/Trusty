@@ -8,7 +8,9 @@
       "Bash(npx ng serve:*)",
       "Bash(copy \"C:\\\\Users\\\\andre\\\\Desktop\\\\Testo del paragrafo.svg\" \"C:\\\\Users\\\\andre\\\\Desktop\\\\trusty\\\\src\\\\assets\\\\logo.svg\")",
       "Bash(npm install --save-dev @vercel/node)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

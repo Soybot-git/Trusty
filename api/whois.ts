@@ -1,4 +1,21 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache';
+
+interface WhoisResult {
+  type: string;
+  status: string;
+  score: number;
+  weight: number;
+  message: string;
+  details: {
+    domainAge: number | null;
+    registrar: string | null;
+    creationDate: string | null;
+    expirationDate: string | null;
+    source?: string;
+    error?: string;
+  };
+}
 
 interface RdapEvent {
   eventAction: string;
@@ -161,6 +178,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const domain = extractDomain(url);
+  const cacheKey = getCacheKey('whois', domain);
+
+  // Check cache first
+  const cached = await getCached<WhoisResult>(cacheKey);
+  if (cached) {
+    return res.status(200).json({ result: cached });
+  }
 
   try {
     // Get RDAP URLs prioritized for this domain's TLD
@@ -201,22 +225,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const domainAge = calculateDomainAge(whoIsData.created);
         const { score, status, message } = getScoreFromAge(domainAge);
 
-        return res.status(200).json({
-          result: {
-            type: 'whois',
-            status,
-            score,
-            weight: 10,
-            message,
-            details: {
-              domainAge,
-              registrar: whoIsData.registrar || 'Sconosciuto',
-              creationDate: whoIsData.created,
-              expirationDate: null,
-              source: 'who.is',
-            },
+        const result: WhoisResult = {
+          type: 'whois',
+          status,
+          score,
+          weight: 10,
+          message,
+          details: {
+            domainAge,
+            registrar: whoIsData.registrar || 'Sconosciuto',
+            creationDate: whoIsData.created,
+            expirationDate: null,
+            source: 'who.is',
           },
-        });
+        };
+
+        // Cache the result
+        await setCache(cacheKey, result, CACHE_TTL.WHOIS);
+
+        return res.status(200).json({ result });
       }
 
       throw new Error(`All RDAP sources failed and who.is fallback failed. Last RDAP: ${lastError}`);
@@ -257,41 +284,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!creationDate) {
-      return res.status(200).json({
-        result: {
-          type: 'whois',
-          status: 'warning',
-          score: 50,
-          weight: 10,
-          message: 'Data di creazione non disponibile',
-          details: {
-            domainAge: null,
-            registrar,
-            creationDate: null,
-            expirationDate,
-          },
+      const result: WhoisResult = {
+        type: 'whois',
+        status: 'warning',
+        score: 50,
+        weight: 10,
+        message: 'Data di creazione non disponibile',
+        details: {
+          domainAge: null,
+          registrar,
+          creationDate: null,
+          expirationDate,
         },
-      });
+      };
+
+      // Cache even partial results (shorter TTL for warnings)
+      await setCache(cacheKey, result, CACHE_TTL.WHOIS / 30); // 1 day for warnings
+
+      return res.status(200).json({ result });
     }
 
     const domainAge = calculateDomainAge(creationDate);
     const { score, status, message } = getScoreFromAge(domainAge);
 
-    return res.status(200).json({
-      result: {
-        type: 'whois',
-        status,
-        score,
-        weight: 10,
-        message,
-        details: {
-          domainAge,
-          registrar,
-          creationDate: creationDate.split('T')[0],
-          expirationDate: expirationDate?.split('T')[0] || null,
-        },
+    const result: WhoisResult = {
+      type: 'whois',
+      status,
+      score,
+      weight: 10,
+      message,
+      details: {
+        domainAge,
+        registrar,
+        creationDate: creationDate.split('T')[0],
+        expirationDate: expirationDate?.split('T')[0] || null,
       },
-    });
+    };
+
+    // Cache the result
+    await setCache(cacheKey, result, CACHE_TTL.WHOIS);
+
+    return res.status(200).json({ result });
   } catch (error) {
     console.error('RDAP error:', error);
 

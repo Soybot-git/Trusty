@@ -1,4 +1,26 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache';
+
+interface ReviewsResult {
+  type: string;
+  status: string;
+  score: number;
+  weight: number;
+  message: string;
+  details: {
+    aggregatedRating: number | null;
+    totalReviews: number;
+    sourceCount: number;
+    sources: Array<{
+      name: string;
+      rating: number | null;
+      totalReviews: number;
+      url: string | null;
+    }>;
+    insufficientReviews: boolean;
+    error?: string;
+  };
+}
 
 // ==================== TYPES ====================
 
@@ -359,6 +381,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const domain = extractDomain(url);
+  const cacheKey = getCacheKey('reviews', domain);
+
+  // Check cache first
+  const cached = await getCached<ReviewsResult>(cacheKey);
+  if (cached) {
+    return res.status(200).json({ result: cached });
+  }
+
   const apiKey = process.env['SERP_API_KEY'];
 
   if (!apiKey) {
@@ -393,27 +423,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Filter sources for response (only include those with data)
     const sourcesWithData = sources.filter((s) => s.rating !== null || s.url !== null);
 
-    return res.status(200).json({
-      result: {
-        type: 'reviews',
-        status,
-        score,
-        weight: REVIEWS_WEIGHT,
-        message,
-        details: {
-          aggregatedRating: aggregated.aggregatedRating,
-          totalReviews: aggregated.totalReviews,
-          sourceCount: aggregated.sourceCount,
-          sources: sourcesWithData.map((s) => ({
-            name: s.name,
-            rating: s.rating,
-            totalReviews: s.totalReviews,
-            url: s.url,
-          })),
-          insufficientReviews,
-        },
+    const result: ReviewsResult = {
+      type: 'reviews',
+      status,
+      score,
+      weight: REVIEWS_WEIGHT,
+      message,
+      details: {
+        aggregatedRating: aggregated.aggregatedRating,
+        totalReviews: aggregated.totalReviews,
+        sourceCount: aggregated.sourceCount,
+        sources: sourcesWithData.map((s) => ({
+          name: s.name,
+          rating: s.rating,
+          totalReviews: s.totalReviews,
+          url: s.url,
+        })),
+        insufficientReviews,
       },
-    });
+    };
+
+    // Cache the result
+    await setCache(cacheKey, result, CACHE_TTL.REVIEWS);
+
+    return res.status(200).json({ result });
   } catch (error) {
     console.error('Reviews aggregation error:', error);
 

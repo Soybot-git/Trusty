@@ -1,4 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache';
+
+interface HeuristicsResult {
+  type: string;
+  status: string;
+  score: number;
+  weight: number;
+  message: string;
+  details: Record<string, unknown>;
+}
 
 // ==================== CONFIGURATION ====================
 
@@ -318,6 +328,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const domain = extractDomain(url);
   const tld = getTld(domain);
+  const cacheKey = getCacheKey('heuristics', domain);
+
+  // Check cache first
+  const cached = await getCached<HeuristicsResult>(cacheKey);
+  if (cached) {
+    return res.status(200).json({ result: cached });
+  }
 
   // Run all checks
   const checks = [
@@ -387,14 +404,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     details.dangers = dangers;
   }
 
-  return res.status(200).json({
-    result: {
-      type: 'heuristics',
-      status,
-      score,
-      weight: 10,
-      message,
-      details,
-    },
-  });
+  const result: HeuristicsResult = {
+    type: 'heuristics',
+    status,
+    score,
+    weight: 10,
+    message,
+    details,
+  };
+
+  // Cache the result (heuristics are static, can cache for long time)
+  await setCache(cacheKey, result, CACHE_TTL.HEURISTICS);
+
+  return res.status(200).json({ result });
 }
