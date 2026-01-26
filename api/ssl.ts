@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as tls from 'tls';
 import * as net from 'net';
-import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache.js';
 
 interface SslResult {
   type: string;

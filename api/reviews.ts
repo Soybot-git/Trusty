@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache.js';
 
 interface ReviewsResult {
   type: string;
