@@ -5,6 +5,11 @@
   "outputDirectory": "dist/trusty/browser",
   "installCommand": "npm install",
   "framework": null,
+  "functions": {
+    "api/*.ts": {
+      "includeFiles": "api/lib/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
