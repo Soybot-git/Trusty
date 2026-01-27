@@ -1,22 +1,98 @@
-# Trusty - Verifica Siti E-commerce
+# Trusty
 
-PWA mobile-first per verificare l'affidabilità di siti e-commerce in pochi secondi.
+**Verifica l'affidabilità dei siti e-commerce in pochi secondi.**
 
-## Obiettivo
+Trusty è una Progressive Web App (PWA) pensata per aiutare gli utenti italiani a proteggersi dalle truffe online, specialmente quando si trovano link sospetti sui social media.
 
-Aiutare gli utenti italiani a verificare la sicurezza dei siti e-commerce prima di effettuare acquisti, specialmente da link provenienti da social media.
+[Demo Live](https://trusty-app.vercel.app) · [Segnala un Bug](https://github.com/user/trusty/issues)
 
-## Architettura
+---
 
-```
-[Angular 17 PWA] → [Vercel Functions] → [API esterne]
-       ↓                   ↓
-   Mobile UI         Serverless API
-```
+## Funzionalità
 
-## Quick Start
+- **Analisi Istantanea** — Incolla un URL e ottieni un punteggio di affidabilità (0-100)
+- **Semaforo Visivo** — Verde (sicuro), giallo (attenzione), rosso (pericolo)
+- **Multi-Source Verification** — Controlli incrociati da Google Safe Browsing, Trustpilot, IPQS e altri
+- **PWA Installabile** — Installa l'app sul tuo dispositivo con un tap
+- **Condivisione Risultati** — Condividi facilmente il risultato con amici
+- **Segnalazione Anomalie** — Segnala risultati errati direttamente dall'app
+- **100% Gratuito** — Nessun account richiesto, nessun limite di utilizzo
+
+---
+
+## Come Funziona
+
+### Algoritmo Trust Score
+
+Il punteggio finale (0-100) è calcolato combinando diversi controlli:
+
+| Check | Peso | Descrizione |
+|-------|------|-------------|
+| Google Safe Browsing | Filtro | Blocco immediato se rilevato malware/phishing |
+| Reputazione (IPQS) | 30% | Fraud score e attività sospette |
+| Recensioni | 30% | Trustpilot, Recensioni Verificate (min. 20 recensioni) |
+| Certificato SSL | 20% | Verifica connessione sicura HTTPS |
+| Età Dominio | 10% | Domini recenti sono più rischiosi |
+| Euristiche Trusty | 10% | Typosquatting, TLD sospetti, pattern anomali |
+
+### Controlli Euristici Proprietari
+
+- **Typosquatting** — Rileva domini che imitano brand famosi (es. `amaz0n.com`)
+- **TLD Sospetti** — Penalizza estensioni spesso usate per truffe (`.xyz`, `.top`, `.click`)
+- **Pattern Anomali** — Troppi trattini, numeri, keyword sospette
+- **Brand Recognition** — Riconosce 60+ brand italiani e internazionali
+
+### Soglie di Valutazione
+
+| Punteggio | Stato | Significato |
+|-----------|-------|-------------|
+| ≥ 70 | 🟢 Sicuro | Il sito appare affidabile |
+| 40-69 | 🟡 Attenzione | Procedi con cautela |
+| < 40 | 🔴 Pericolo | Sito probabilmente non affidabile |
+
+### Override di Sicurezza
+
+- Malware/phishing rilevato → **Score 0** (blocco immediato)
+- Dominio < 30 giorni → **Max score 50**
+- < 20 recensioni → **Max score 60**
+
+---
+
+## Tech Stack
+
+### Frontend
+- **Angular 17+** con standalone components
+- **PWA** (Service Worker + Web App Manifest)
+- **Mobile-first** responsive design
+- Zero dipendenze UI esterne
+
+### Backend
+- **Vercel Functions** (TypeScript, serverless)
+- **Upstash Redis** per caching
+
+### API Esterne
+- Google Safe Browsing API
+- IPQualityScore (IPQS)
+- SerpAPI (per aggregare recensioni)
+- RDAP / who.is (età dominio)
+
+---
+
+## Installazione
+
+### Prerequisiti
+
+- Node.js 18+
+- npm 9+
+- Account Vercel (per deploy)
+
+### Setup Locale
 
 ```bash
+# Clona il repository
+git clone https://github.com/user/trusty.git
+cd trusty
+
 # Installa dipendenze
 npm install
 
@@ -26,88 +102,31 @@ npm start
 # Apri http://localhost:4200
 ```
 
-## Stack Tecnologico
+### Variabili d'Ambiente
 
-### Frontend
-- Angular 17+ con standalone components
-- PWA (Service Worker + Web Manifest)
-- Mobile-first responsive design
-- Zero dipendenze UI esterne
+Crea un file `.env` o configura in Vercel Dashboard:
 
-### Backend
-- Vercel Functions (TypeScript)
-- API serverless per ogni check
+| Variabile | Descrizione | Obbligatoria |
+|-----------|-------------|--------------|
+| `GOOGLE_SAFE_BROWSING_KEY` | API key Google Safe Browsing | Sì |
+| `IPQS_API_KEY` | API key IPQualityScore | Sì |
+| `SERP_API_KEY` | API key SerpApi | Sì |
+| `UPSTASH_REDIS_REST_URL` | URL Redis Upstash | No (caching) |
+| `UPSTASH_REDIS_REST_TOKEN` | Token Redis Upstash | No (caching) |
 
-## Algoritmo Trust Score
+### Sviluppo con Mock
 
-Il punteggio finale (0-100) combina diversi controlli:
+Per sviluppare senza API reali, modifica `src/environments/environment.ts`:
 
-### Distribuzione Pesi
+```typescript
+export const environment = {
+  production: false,
+  useMocks: true,
+  apiBaseUrl: '/api',
+};
+```
 
-| Check | Peso | Note |
-|-------|------|------|
-| Safe Browsing | 0% | Filtro preliminare (blocco se malware) |
-| IPQS (Reputazione) | 30% | Fisso |
-| Recensioni | 30% | Fisso, richiede minimo 20 recensioni |
-| SSL | 20% | Fisso |
-| WHOIS (Età dominio) | 10% | Fisso |
-| Euristiche | 10% | Fisso |
-| **TOTALE** | **100%** | |
-
-### Logica Recensioni
-
-| Condizione | Comportamento |
-|------------|---------------|
-| < 20 recensioni | "Non ci sono abbastanza recensioni" + max score 60 |
-| ≥ 20 recensioni | Score normale basato sul rating (fino a 100) |
-
-**Razionale**: siti senza recensioni sufficienti non possono ottenere un punteggio superiore a 60 (sufficienza), indipendentemente dagli altri controlli positivi.
-
-### API Esterne
-
-| Check | Fonte | Stato |
-|-------|-------|-------|
-| Safe Browsing | Google Safe Browsing API | ✅ Attivo |
-| Recensioni | Multi-source (vedi sotto) | ✅ Attivo |
-| Età dominio | RDAP + who.is | ✅ Attivo |
-| Reputazione | IPQualityScore | ✅ Attivo |
-| SSL | Verifica diretta TLS | ✅ Attivo |
-
-### Fonti Recensioni (aggregate)
-
-Il sistema aggrega recensioni da più fonti per una valutazione più affidabile:
-
-| Fonte | Tipo |
-|-------|------|
-| Trustpilot | Recensioni verificate |
-| Recensioni Verificate | Recensioni certificate |
-
-**Logica di aggregazione**:
-- Media pesata per numero di recensioni quando disponibile
-- Media semplice se mancano i conteggi
-- Minimo 20 recensioni per essere considerate valide
-
-**Ottimizzazione API**: 1 sola chiamata SerpAPI per verifica
-- Query combinata (OR) per tutti i siti di recensioni
-
-### Controlli Proprietari Trusty
-
-**Dettaglio controlli euristici (10%):**
-- **Typosquatting** — Rileva domini che imitano brand famosi (es. `amaz0n.com`, `paypa1.com`)
-- **TLD sospetti** — Penalizza estensioni spesso usate per truffe (`.xyz`, `.top`, `.click`)
-- **Pattern sospetti** — Troppi trattini, numeri, keyword come "free", "gratis", "win"
-- **Lunghezza dominio** — Domini eccessivamente lunghi sono sospetti
-- **Brand conosciuti** — 60+ brand italiani e internazionali riconosciuti (bonus)
-
-### Soglie Semaforo
-- **Safe**: score ≥ 70
-- **Caution**: score 40-69
-- **Danger**: score < 40
-
-### Override di sicurezza
-- Malware/phishing rilevato → blocco immediato (score = 0)
-- Dominio < 30 giorni → max score 50
-- Recensioni insufficienti (< 20) → max score 60
+---
 
 ## Struttura Progetto
 
@@ -115,77 +134,80 @@ Il sistema aggrega recensioni da più fonti per una valutazione più affidabile:
 trusty/
 ├── src/
 │   ├── app/
-│   │   ├── components/          # UI components
-│   │   │   ├── url-input/
-│   │   │   ├── trust-result/
-│   │   │   ├── loading/
-│   │   │   ├── share-buttons/
-│   │   │   ├── info-modal/
-│   │   │   └── help-modal/
+│   │   ├── components/
+│   │   │   ├── url-input/        # Input URL con validazione
+│   │   │   ├── trust-result/     # Visualizzazione risultato
+│   │   │   ├── loading/          # Animazione caricamento
+│   │   │   ├── share-buttons/    # Pulsanti condivisione
+│   │   │   ├── info-modal/       # Modal "Come funziona"
+│   │   │   ├── help-modal/       # Modal aiuto
+│   │   │   └── report-modal/     # Modal segnalazione bug
 │   │   ├── services/
-│   │   │   ├── api/             # Real API services
-│   │   │   ├── mock/            # Mock services
 │   │   │   ├── trust-checker.service.ts
 │   │   │   └── scoring.service.ts
 │   │   └── models/
-│   ├── environments/
 │   └── assets/
-├── api/                         # Vercel Functions
-│   ├── safe-browsing.ts         # Google Safe Browsing
-│   ├── whois.ts                 # RDAP + who.is fallback
-│   ├── ssl.ts                   # Verifica certificato TLS
-│   ├── ipqs.ts                  # IPQualityScore
-│   ├── reviews.ts               # Trustpilot via SerpApi
-│   └── heuristics.ts            # Controlli proprietari
-├── vercel.json                  # Configurazione Vercel
-└── package.json
+├── api/                          # Vercel Functions
+│   ├── check.ts                  # Endpoint principale
+│   ├── safe-browsing.ts          # Google Safe Browsing
+│   ├── whois.ts                  # RDAP + who.is
+│   ├── ssl.ts                    # Verifica certificato
+│   ├── ipqs.ts                   # IPQualityScore
+│   ├── reviews.ts                # Aggregatore recensioni
+│   ├── heuristics.ts             # Controlli euristici
+│   └── lib/                      # Utilities condivise
+└── vercel.json
 ```
 
-## Variabili d'Ambiente (Vercel)
-
-Configurare in Vercel Dashboard → Settings → Environment Variables:
-
-| Variabile | Descrizione | Obbligatoria |
-|-----------|-------------|--------------|
-| `GOOGLE_SAFE_BROWSING_KEY` | API key Google Safe Browsing | ✅ Sì |
-| `IPQS_API_KEY` | API key IPQualityScore | ✅ Sì |
-| `SERP_API_KEY` | API key SerpApi | ✅ Sì |
+---
 
 ## Deploy
 
-### Vercel (automatico)
-
-Il progetto è configurato per deploy automatico su push:
+### Vercel (Consigliato)
 
 ```bash
-git push origin main
-# Vercel rileva automaticamente e fa deploy
+# Installa Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
 ```
 
-### Configurazione manuale
+Oppure connetti il repository GitHub a Vercel per deploy automatici su ogni push.
+
+### Build Manuale
 
 ```bash
 npm run build
 # Output in dist/trusty/browser
-# Vercel lo serve automaticamente
 ```
 
-## Sviluppo locale con mock
+---
 
-Per sviluppare senza API reali, in `src/environments/environment.ts`:
+## Contributing
 
-```typescript
-export const environment = {
-  production: false,
-  useMocks: true,  // Usa dati simulati
-  apiBaseUrl: '/api',
-};
-```
+Le contribuzioni sono benvenute!
+
+1. Fai un fork del repository
+2. Crea un branch per la tua feature (`git checkout -b feature/nuova-funzionalita`)
+3. Committa le modifiche (`git commit -m 'Aggiunge nuova funzionalità'`)
+4. Pusha il branch (`git push origin feature/nuova-funzionalita`)
+5. Apri una Pull Request
+
+### Segnalazione Bug
+
+Usa il pulsante "Segnala un'anomalia" nell'app oppure [apri una issue](https://github.com/user/trusty/issues).
+
+---
 
 ## Disclaimer
 
-> Trusty fornisce una stima automatizzata basata su fattori pubblici. Non garantisce la legittimità di alcun sito. Verifica sempre autonomamente prima di acquistare.
+Trusty fornisce una **stima automatizzata** basata su dati pubblicamente verificabili. Il punteggio rappresenta un'opinione tecnica e **non costituisce prova** di legittimità o illegittimità di alcun sito.
+
+**Verifica sempre autonomamente** prima di effettuare acquisti, specialmente per importi elevati.
+
+---
 
 ## License
 
-MIT
+MIT © Trusty
