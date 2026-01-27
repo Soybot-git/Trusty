@@ -53,8 +53,8 @@ export class ReportModalComponent {
         body: JSON.stringify({
           problemType: this.problemTypes.find(p => p.value === this.problemType)?.label,
           description: this.description.trim(),
-          email: this.email.trim() || 'Non fornita',
           _subject: `[Trusty] Segnalazione: ${this.problemTypes.find(p => p.value === this.problemType)?.label}`,
+          ...(this.email.trim() && { _replyto: this.email.trim() }),
         }),
       });
 
