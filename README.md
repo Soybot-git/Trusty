@@ -84,7 +84,6 @@ Il punteggio finale (0-100) è calcolato combinando diversi controlli:
 
 - Node.js 18+
 - npm 9+
-- Account Vercel (per deploy)
 
 ### Setup Locale
 
