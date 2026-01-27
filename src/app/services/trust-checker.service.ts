@@ -3,7 +3,6 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { CheckResult, TrustResult } from '../models';
 import { ScoringService } from './scoring.service';
-import { environment } from '../../environments/environment';
 
 // Cache configuration
 const CACHE_PREFIX = 'trusty_cache_';
@@ -14,17 +13,6 @@ interface CacheEntry {
   timestamp: number;
 }
 
-// Mock services
-import {
-  MockSafeBrowsingService,
-  MockWhoisService,
-  MockSslService,
-  MockIpqsService,
-  MockReviewsService,
-  MockHeuristicsService,
-} from './mock';
-
-// Real services
 import {
   SafeBrowsingService,
   WhoisService,
@@ -40,21 +28,12 @@ import {
 export class TrustCheckerService {
   private scoringService = inject(ScoringService);
 
-  // Mock services
-  private mockSafeBrowsing = inject(MockSafeBrowsingService);
-  private mockWhois = inject(MockWhoisService);
-  private mockSsl = inject(MockSslService);
-  private mockIpqs = inject(MockIpqsService);
-  private mockReviews = inject(MockReviewsService);
-  private mockHeuristics = inject(MockHeuristicsService);
-
-  // Real services
-  private realSafeBrowsing = inject(SafeBrowsingService);
-  private realWhois = inject(WhoisService);
-  private realSsl = inject(SslService);
-  private realIpqs = inject(IpqsService);
-  private realReviews = inject(ReviewsService);
-  private realHeuristics = inject(HeuristicsService);
+  private safeBrowsing = inject(SafeBrowsingService);
+  private whois = inject(WhoisService);
+  private ssl = inject(SslService);
+  private ipqs = inject(IpqsService);
+  private reviews = inject(ReviewsService);
+  private heuristics = inject(HeuristicsService);
 
   /**
    * Run all checks on a URL and return the aggregated trust result
@@ -71,44 +50,13 @@ export class TrustCheckerService {
     }
     console.log(`Client cache MISS: ${domain}`);
 
-    // Get the appropriate service based on environment
-    const useMocks = environment.useMocks;
-
     const checks$: Observable<CheckResult>[] = [
-      this.runCheck(
-        useMocks
-          ? this.mockSafeBrowsing.check(normalizedUrl)
-          : this.realSafeBrowsing.check(normalizedUrl),
-        'safe-browsing'
-      ),
-      this.runCheck(
-        useMocks
-          ? this.mockWhois.check(normalizedUrl)
-          : this.realWhois.check(normalizedUrl),
-        'whois'
-      ),
-      this.runCheck(
-        useMocks ? this.mockSsl.check(normalizedUrl) : this.realSsl.check(normalizedUrl),
-        'ssl'
-      ),
-      this.runCheck(
-        useMocks
-          ? this.mockIpqs.check(normalizedUrl)
-          : this.realIpqs.check(normalizedUrl),
-        'ipqs'
-      ),
-      this.runCheck(
-        useMocks
-          ? this.mockReviews.check(normalizedUrl)
-          : this.realReviews.check(normalizedUrl),
-        'reviews'
-      ),
-      this.runCheck(
-        useMocks
-          ? this.mockHeuristics.check(normalizedUrl)
-          : this.realHeuristics.check(normalizedUrl),
-        'heuristics'
-      ),
+      this.runCheck(this.safeBrowsing.check(normalizedUrl), 'safe-browsing'),
+      this.runCheck(this.whois.check(normalizedUrl), 'whois'),
+      this.runCheck(this.ssl.check(normalizedUrl), 'ssl'),
+      this.runCheck(this.ipqs.check(normalizedUrl), 'ipqs'),
+      this.runCheck(this.reviews.check(normalizedUrl), 'reviews'),
+      this.runCheck(this.heuristics.check(normalizedUrl), 'heuristics'),
     ];
 
     return forkJoin(checks$).pipe(

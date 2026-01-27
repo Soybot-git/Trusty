@@ -9,7 +9,15 @@ import {
   HeuristicsDetails,
   CheckDetails,
 } from '../models';
-import { extractDomain } from './mock/mock-data';
+
+function extractDomain(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.replace(/^www\./, '');
+  } catch {
+    return url.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+  }
+}
 
 // Type guards for details
 function isSafeBrowsingDetails(details: CheckDetails | undefined): details is SafeBrowsingDetails {

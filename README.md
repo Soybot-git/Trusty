@@ -114,18 +114,6 @@ Crea un file `.env` o configura in Vercel Dashboard:
 | `UPSTASH_REDIS_REST_URL` | URL Redis Upstash | No (caching) |
 | `UPSTASH_REDIS_REST_TOKEN` | Token Redis Upstash | No (caching) |
 
-### Sviluppo con Mock
-
-Per sviluppare senza API reali, modifica `src/environments/environment.ts`:
-
-```typescript
-export const environment = {
-  production: false,
-  useMocks: true,
-  apiBaseUrl: '/api',
-};
-```
-
 ---
 
 ## Struttura Progetto
@@ -161,20 +149,6 @@ trusty/
 
 ---
 
-## Deploy
-
-### Vercel (Consigliato)
-
-```bash
-# Installa Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-```
-
-Oppure connetti il repository GitHub a Vercel per deploy automatici su ogni push.
-
 ### Build Manuale
 
 ```bash
@@ -193,12 +167,6 @@ Le contribuzioni sono benvenute!
 3. Committa le modifiche (`git commit -m 'Aggiunge nuova funzionalità'`)
 4. Pusha il branch (`git push origin feature/nuova-funzionalita`)
 5. Apri una Pull Request
-
-### Segnalazione Bug
-
-Usa il pulsante "Segnala un'anomalia" nell'app oppure [apri una issue](https://github.com/user/trusty/issues).
-
----
 
 ## Disclaimer
 
