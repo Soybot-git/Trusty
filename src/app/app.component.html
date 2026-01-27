@@ -45,15 +45,24 @@
 
   <footer class="footer">
     <p class="disclaimer">
-      Trusty fornisce una stima automatizzata basata su fattori pubblici. Non
-      garantisce la legittimità di alcun sito. Verifica sempre autonomamente prima
-      di acquistare.
+      Trusty fornisce un punteggio indicativo generato automaticamente da algoritmi su dati pubblici. Tale valutazione rappresenta un'opinione tecnica e non costituisce prova di legittimità o illegittimità. L'uso del servizio implica l'accettazione che i risultati potrebbero essere incompleti o errati. Trusty non è responsabile per le decisioni d'acquisto né per eventuali danni reputazionali derivanti dall'interpretazione automatizzata.
     </p>
 
-    @if (!isInstalled) {
-      <button class="install-btn" (click)="installApp()">📲 Installa App</button>
-    }
+    <button class="report-btn" (click)="showReportModal = true">
+      Segnala un'anomalia
+    </button>
   </footer>
+
+  @if (!isInstalled) {
+    <button class="floating-install-btn" (click)="installApp()" title="Installa App">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span class="floating-install-tooltip">Installa App</span>
+    </button>
+  }
 
   @if (showInfoModal) {
     <app-info-modal (close)="showInfoModal = false" />
@@ -61,5 +70,9 @@
 
   @if (showHelpModal) {
     <app-help-modal (close)="showHelpModal = false" />
+  }
+
+  @if (showReportModal) {
+    <app-report-modal (close)="showReportModal = false" />
   }
 </div>

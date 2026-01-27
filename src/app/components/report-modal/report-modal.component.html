@@ -1,0 +1,86 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-content">
+    <button class="close-btn" (click)="close.emit()" aria-label="Chiudi">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="modal-header">
+      <h2>Segnala un'anomalia</h2>
+    </div>
+
+    @if (isSuccess) {
+      <div class="modal-body success-state">
+        <div class="success-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <p class="success-message">Grazie per la segnalazione!</p>
+        <p class="success-submessage">Il tuo feedback ci aiuta a migliorare.</p>
+      </div>
+    } @else {
+      <form class="modal-body" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="problemType">Tipo di problema *</label>
+          <select
+            id="problemType"
+            [(ngModel)]="problemType"
+            name="problemType"
+            required
+          >
+            <option value="" disabled>Seleziona un'opzione</option>
+            @for (type of problemTypes; track type.value) {
+              <option [value]="type.value">{{ type.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Descrizione *</label>
+          <textarea
+            id="description"
+            [(ngModel)]="description"
+            name="description"
+            rows="4"
+            placeholder="Descrivi il problema riscontrato..."
+            required
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email (opzionale)</label>
+          <input
+            type="email"
+            id="email"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="Per eventuale follow-up"
+          />
+        </div>
+
+        @if (errorMessage) {
+          <div class="error-message">
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
+
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="!isFormValid || isSubmitting"
+        >
+          @if (isSubmitting) {
+            <span class="spinner"></span>
+            Invio in corso...
+          } @else {
+            Invia segnalazione
+          }
+        </button>
+      </form>
+    }
+  </div>
+</div>

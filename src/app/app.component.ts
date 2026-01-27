@@ -9,6 +9,7 @@ import {
   ShareButtonsComponent,
   InfoModalComponent,
   HelpModalComponent,
+  ReportModalComponent,
 } from './components';
 
 @Component({
@@ -22,6 +23,7 @@ import {
     ShareButtonsComponent,
     InfoModalComponent,
     HelpModalComponent,
+    ReportModalComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -35,6 +37,7 @@ export class AppComponent {
   isInstalled = false;
   showInfoModal = false;
   showHelpModal = false;
+  showReportModal = false;
 
   private deferredPrompt: BeforeInstallPromptEvent | null = null;
 
