@@ -19,7 +19,7 @@ export class ReportModalComponent {
   isSuccess = false;
   errorMessage = '';
 
-  private readonly formspreeEndpoint = 'https://formspree.io/f/xykwbbdo';
+  private readonly formspreeEndpoint = 'https://formspree.io/f/xwvbreel';
 
   problemTypes = [
     { value: 'wrong-result', label: 'Risultato errato' },
