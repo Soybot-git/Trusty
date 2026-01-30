@@ -20,38 +20,40 @@ interface IpqsResult {
   };
 }
 
-interface IPQSResponse {
-  success: boolean;
-  message?: string;
+interface VirusTotalResponse {
+  data: {
+    attributes: {
+      last_analysis_stats: {
+        harmless: number;
+        malicious: number;
+        suspicious: number;
+        undetected: number;
+        timeout: number;
+      };
+      reputation: number;
+      total_votes: { harmless: number; malicious: number };
+      categories: Record<string, string>;
+    };
+  };
+}
+
+interface DerivedRiskData {
+  riskScore: number;
   unsafe: boolean;
-  risk_score: number;
   suspicious: boolean;
   phishing: boolean;
   malware: boolean;
   parking: boolean;
   spamming: boolean;
-  adult: boolean;
-  category?: string;
-  domain_age?: {
-    human: string;
-    timestamp: number;
-    iso: string;
-  };
-  server?: string;
-  content_type?: string;
-}
-
-function normalizeUrl(url: string): string {
-  let normalized = url.trim();
-  if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
-    normalized = 'https://' + normalized;
-  }
-  return normalized;
+  category: string | null;
 }
 
 function extractDomain(url: string): string {
   try {
-    const normalized = normalizeUrl(url);
+    let normalized = url.trim();
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized;
+    }
     const urlObj = new URL(normalized);
     return urlObj.hostname.replace(/^www\./, '');
   } catch {
@@ -59,8 +61,38 @@ function extractDomain(url: string): string {
   }
 }
 
-function getScoreFromRiskScore(riskScore: number, data: IPQSResponse): { score: number; status: string; message: string } {
-  // IPQS risk_score: 0 = safe, 100 = dangerous (inverted from our scale)
+/**
+ * Derive risk data from VirusTotal response.
+ * Calculates a 0-100 risk score and boolean flags compatible with the existing IpqsResult shape.
+ */
+function deriveRiskData(vt: VirusTotalResponse): DerivedRiskData {
+  const stats = vt.data.attributes.last_analysis_stats;
+  const total = stats.harmless + stats.malicious + stats.suspicious + stats.undetected + stats.timeout;
+  const riskScore = total > 0 ? Math.round(((stats.malicious + stats.suspicious) / total) * 100) : 0;
+
+  const categories = vt.data.attributes.categories || {};
+  const categoryValues = Object.values(categories).map(v => v.toLowerCase());
+
+  const malware = stats.malicious >= 3;
+  const phishing = stats.malicious >= 1 && categoryValues.some(c => c.includes('phishing'));
+  const suspicious = stats.suspicious > 0;
+  const parking = categoryValues.some(c => c.includes('parked') || c.includes('parking'));
+  const unsafe = stats.malicious > 0 || stats.suspicious > 0;
+
+  return {
+    riskScore,
+    unsafe,
+    suspicious,
+    phishing,
+    malware,
+    parking,
+    spamming: false, // not available from VirusTotal
+    category: categoryValues[0] || null,
+  };
+}
+
+function getScoreFromRiskScore(riskScore: number, data: DerivedRiskData): { score: number; status: string; message: string } {
+  // riskScore: 0 = safe, 100 = dangerous (inverted from our scale)
 
   if (data.malware) {
     return { score: 0, status: 'danger', message: 'Malware rilevato sul sito' };
@@ -112,10 +144,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'URL is required' });
   }
 
-  const apiKey = process.env['IPQS_API_KEY'];
+  const apiKey = process.env['VIRUSTOTAL_API_KEY'];
 
   if (!apiKey) {
-    console.error('IPQS_API_KEY not configured');
+    console.error('VIRUSTOTAL_API_KEY not configured');
     return res.status(200).json({
       result: {
         type: 'ipqs',
@@ -130,8 +162,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  const normalizedUrl = normalizeUrl(url);
-  const encodedUrl = encodeURIComponent(normalizedUrl);
   const domain = extractDomain(url);
   const cacheKey = getCacheKey('ipqs', domain);
 
@@ -143,26 +173,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const response = await fetch(
-      `https://www.ipqualityscore.com/api/json/url/${apiKey}/${encodedUrl}`,
+      `https://www.virustotal.com/api/v3/domains/${domain}`,
       {
         method: 'GET',
         headers: {
+          'x-apikey': apiKey,
           'Accept': 'application/json',
         },
       }
     );
 
     if (!response.ok) {
-      throw new Error(`IPQS API error: ${response.status}`);
+      throw new Error(`VirusTotal API error: ${response.status}`);
     }
 
-    const data: IPQSResponse = await response.json();
+    const vtData: VirusTotalResponse = await response.json();
+    const data = deriveRiskData(vtData);
 
-    if (!data.success) {
-      throw new Error(data.message || 'IPQS request failed');
-    }
-
-    const { score, status, message } = getScoreFromRiskScore(data.risk_score, data);
+    const { score, status, message } = getScoreFromRiskScore(data.riskScore, data);
 
     const result: IpqsResult = {
       type: 'ipqs',
@@ -171,14 +199,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       weight: 30,
       message,
       details: {
-        riskScore: data.risk_score,
+        riskScore: data.riskScore,
         unsafe: data.unsafe,
         suspicious: data.suspicious,
         phishing: data.phishing,
         malware: data.malware,
         parking: data.parking,
         spamming: data.spamming,
-        category: data.category || null,
+        category: data.category,
       },
     };
 
@@ -187,7 +215,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ result });
   } catch (error) {
-    console.error('IPQS error:', error);
+    console.error('VirusTotal error:', error);
 
     return res.status(200).json({
       result: {

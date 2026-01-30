@@ -24,22 +24,16 @@ interface ReviewsResult {
 
 // ==================== TYPES ====================
 
-interface SerpApiResult {
-  organic_results?: Array<{
-    link?: string;
+interface SerperResult {
+  organic?: Array<{
     title?: string;
+    link?: string;
     snippet?: string;
-    rich_snippet?: {
-      top?: {
-        detected_extensions?: {
-          rating?: number;
-          reviews?: number;
-        };
-        extensions?: string[];
-      };
-    };
+    position?: number;
+    rating?: number;
+    reviews?: number;
+    siteLinks?: Array<{ title: string; link: string }>;
   }>;
-  error?: string;
 }
 
 interface ReviewSource {
@@ -127,43 +121,21 @@ function identifySource(url: string): typeof REVIEW_SITES[0] | null {
 }
 
 /**
- * Extract rating and review count from a search result
+ * Extract rating and review count from a Serper search result
  */
-function extractRatingFromResult(result: SerpApiResult['organic_results'][0]): { rating: number | null; totalReviews: number } {
+function extractRatingFromResult(result: NonNullable<SerperResult['organic']>[0]): { rating: number | null; totalReviews: number } {
   let rating: number | null = null;
   let totalReviews = 0;
 
-  // Try to get rating from rich snippet detected_extensions
-  if (result.rich_snippet?.top?.detected_extensions) {
-    const ext = result.rich_snippet.top.detected_extensions;
-    if (ext.rating && ext.rating >= 1 && ext.rating <= 5) {
-      rating = ext.rating;
-    }
-    if (ext.reviews) {
-      totalReviews = ext.reviews;
-    }
+  // Serper provides rating and reviews as direct top-level fields
+  if (result.rating != null && result.rating >= 1 && result.rating <= 5) {
+    rating = result.rating;
+  }
+  if (result.reviews != null) {
+    totalReviews = result.reviews;
   }
 
-  // Try to parse from extensions array
-  if (rating === null && result.rich_snippet?.top?.extensions) {
-    for (const ext of result.rich_snippet.top.extensions) {
-      // Look for rating patterns
-      const ratingMatch = ext.match(/(\d+[.,]?\d*)\s*(\/\s*5|stars?|stelle)?/i);
-      if (ratingMatch && !ext.toLowerCase().includes('review') && !ext.toLowerCase().includes('recens')) {
-        const parsed = parseFloat(ratingMatch[1].replace(',', '.'));
-        if (parsed >= 1 && parsed <= 5) {
-          rating = parsed;
-        }
-      }
-      // Look for review count
-      const reviewMatch = ext.match(/(\d+[\d,\.]*k?)\s*(review|recens)/i);
-      if (reviewMatch) {
-        totalReviews = parseReviewCount(reviewMatch[1]);
-      }
-    }
-  }
-
-  // Try to extract from snippet text
+  // Fallback: try to extract from snippet text
   if (rating === null && result.snippet) {
     const snippetRating = result.snippet.match(/(\d+[.,]?\d*)\s*\/\s*5/);
     if (snippetRating) {
@@ -171,7 +143,6 @@ function extractRatingFromResult(result: SerpApiResult['organic_results'][0]): {
     }
   }
 
-  // Also try to find review count in snippet
   if (totalReviews === 0 && result.snippet) {
     const snippetReviews = result.snippet.match(/(\d+[\d,\.]*k?)\s*(review|recens)/i);
     if (snippetReviews) {
@@ -191,29 +162,36 @@ function extractRatingFromResult(result: SerpApiResult['organic_results'][0]): {
 async function searchAllReviewSources(domain: string, apiKey: string): Promise<ReviewSource[]> {
   // Build combined OR query for all review sites
   const sitesQuery = REVIEW_SITES.map(s => s.siteQuery).join(' OR ');
-  const searchQuery = encodeURIComponent(`"${domain}" (${sitesQuery})`);
-  const serpUrl = `https://serpapi.com/search.json?engine=google&q=${searchQuery}&api_key=${apiKey}&num=15&hl=it&gl=it`;
+  const searchQuery = `"${domain}" (${sitesQuery})`;
 
   const sources: ReviewSource[] = [];
 
   try {
-    const response = await fetch(serpUrl);
+    const response = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        q: searchQuery,
+        gl: 'it',
+        hl: 'it',
+        num: 15,
+      }),
+    });
 
     if (!response.ok) {
-      throw new Error(`SerpApi error: ${response.status}`);
+      throw new Error(`Serper error: ${response.status}`);
     }
 
-    const data: SerpApiResult = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error);
-    }
+    const data: SerperResult = await response.json();
 
     const foundSites = new Set<string>();
 
     // Process organic results
-    if (data.organic_results && data.organic_results.length > 0) {
-      for (const result of data.organic_results) {
+    if (data.organic && data.organic.length > 0) {
+      for (const result of data.organic) {
         if (!result.link) continue;
 
         const site = identifySource(result.link);
@@ -389,10 +367,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ result: cached });
   }
 
-  const apiKey = process.env['SERP_API_KEY'];
+  const apiKey = process.env['SERPER_API_KEY'];
 
   if (!apiKey) {
-    console.error('SERP_API_KEY not configured');
+    console.error('SERPER_API_KEY not configured');
     return res.status(200).json({
       result: {
         type: 'reviews',

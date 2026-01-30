@@ -10,7 +10,8 @@
       "Bash(npm install --save-dev @vercel/node)",
       "Bash(git add:*)",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebSearch"
     ]
   }
 }
