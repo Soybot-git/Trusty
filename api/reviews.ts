@@ -85,7 +85,7 @@ async function fetchTrustpilotData(domain: string): Promise<{ rating: number | n
         const parsed = JSON.parse(jsonContent);
         const items = Array.isArray(parsed) ? parsed : [parsed];
         for (const item of items) {
-          console.log(`JSON-LD item @type: ${item['@type']}, has aggregateRating: ${!!item.aggregateRating}`);
+          console.log(`JSON-LD item keys: ${Object.keys(item).join(', ')}, @type: ${item['@type']}, snippet: ${JSON.stringify(item).substring(0, 300)}`);
           const aggRating = item.aggregateRating;
           if (aggRating?.ratingValue) {
             console.log(`Found rating: ${aggRating.ratingValue}, reviewCount: ${aggRating.reviewCount}`);
