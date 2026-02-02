@@ -3,6 +3,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { CheckResult, TrustResult } from '../models';
 import { ScoringService } from './scoring.service';
+import { environment } from '../../environments/environment';
 
 // Cache configuration
 const CACHE_PREFIX = 'trusty_cache_';
@@ -42,13 +43,15 @@ export class TrustCheckerService {
     const normalizedUrl = this.normalizeUrl(url);
     const domain = this.extractDomain(normalizedUrl);
 
-    // Check localStorage cache first
-    const cached = this.getCachedResult(domain);
-    if (cached) {
-      console.log(`Client cache HIT: ${domain}`);
-      return of(cached);
+    // Check localStorage cache first (skip if cache disabled)
+    if (!environment.disableCache) {
+      const cached = this.getCachedResult(domain);
+      if (cached) {
+        console.log(`Client cache HIT: ${domain}`);
+        return of(cached);
+      }
+      console.log(`Client cache MISS: ${domain}`);
     }
-    console.log(`Client cache MISS: ${domain}`);
 
     const checks$: Observable<CheckResult>[] = [
       this.runCheck(this.safeBrowsing.check(normalizedUrl), 'safe-browsing'),
@@ -61,7 +64,7 @@ export class TrustCheckerService {
 
     return forkJoin(checks$).pipe(
       map((results) => this.scoringService.calculateScore(normalizedUrl, results)),
-      tap((result) => this.setCachedResult(domain, result))
+      tap((result) => { if (!environment.disableCache) this.setCachedResult(domain, result); })
     );
   }
 

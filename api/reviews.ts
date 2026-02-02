@@ -72,7 +72,11 @@ async function fetchTrustpilotData(domain: string): Promise<{ rating: number | n
     }
 
     const html = await response.text();
+    console.log(`Trustpilot page for ${domain}: ${html.length} chars, status ${response.status}`);
+
     const jsonLdBlocks = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi);
+    console.log(`JSON-LD blocks found: ${jsonLdBlocks ? jsonLdBlocks.length : 0}`);
+
     if (!jsonLdBlocks) return { rating: null, totalReviews: 0, url: trustpilotUrl };
 
     for (const block of jsonLdBlocks) {
@@ -81,8 +85,10 @@ async function fetchTrustpilotData(domain: string): Promise<{ rating: number | n
         const parsed = JSON.parse(jsonContent);
         const items = Array.isArray(parsed) ? parsed : [parsed];
         for (const item of items) {
+          console.log(`JSON-LD item @type: ${item['@type']}, has aggregateRating: ${!!item.aggregateRating}`);
           const aggRating = item.aggregateRating;
           if (aggRating?.ratingValue) {
+            console.log(`Found rating: ${aggRating.ratingValue}, reviewCount: ${aggRating.reviewCount}`);
             return {
               rating: parseFloat(String(aggRating.ratingValue).replace(',', '.')),
               totalReviews: parseInt(String(aggRating.reviewCount || '0'), 10) || 0,
@@ -90,9 +96,12 @@ async function fetchTrustpilotData(domain: string): Promise<{ rating: number | n
             };
           }
         }
-      } catch { /* skip malformed JSON-LD blocks */ }
+      } catch (e) {
+        console.error('JSON-LD parse error:', e);
+      }
     }
 
+    console.log('No aggregateRating found in any JSON-LD block');
     return { rating: null, totalReviews: 0, url: trustpilotUrl };
   } catch (error) {
     console.error('Trustpilot fetch error:', error);

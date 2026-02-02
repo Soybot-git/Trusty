@@ -41,6 +41,7 @@ async function getRedis(): Promise<any> {
  * Get a cached value from Redis
  */
 export async function getCached<T>(key: string): Promise<T | null> {
+  if (process.env['DISABLE_CACHE'] === 'true') return null;
   try {
     const client = await getRedis();
     if (!client) return null;
@@ -62,6 +63,7 @@ export async function getCached<T>(key: string): Promise<T | null> {
  * Set a value in Redis cache with TTL
  */
 export async function setCache(key: string, value: unknown, ttlSeconds: number): Promise<void> {
+  if (process.env['DISABLE_CACHE'] === 'true') return;
   try {
     const client = await getRedis();
     if (!client) return;
