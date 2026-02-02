@@ -177,12 +177,14 @@ async function searchAllReviewSources(domain: string, apiKey: string): Promise<R
         q: searchQuery,
         gl: 'it',
         hl: 'it',
-        num: 15,
+        num: 10,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Serper error: ${response.status}`);
+      const errorBody = await response.text();
+      console.error('Serper response body:', errorBody);
+      throw new Error(`Serper error: ${response.status} - ${errorBody}`);
     }
 
     const data: SerperResult = await response.json();
@@ -367,7 +369,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ result: cached });
   }
 
-  const apiKey = process.env['SERPER_API_KEY'];
+  const apiKey = process.env['SERPER_API_KEY']?.trim();
 
   if (!apiKey) {
     console.error('SERPER_API_KEY not configured');

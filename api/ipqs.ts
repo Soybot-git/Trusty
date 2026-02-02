@@ -184,7 +184,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
 
     if (!response.ok) {
-      throw new Error(`VirusTotal API error: ${response.status}`);
+      const errorBody = await response.text();
+      console.error('VirusTotal response body:', errorBody);
+      throw new Error(`VirusTotal API error: ${response.status} - ${errorBody}`);
     }
 
     const vtData: VirusTotalResponse = await response.json();
