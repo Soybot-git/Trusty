@@ -131,16 +131,37 @@ function extractRatingFromResult(result: NonNullable<SerperResult['organic']>[0]
 
   // Fallback: try to extract from snippet text
   if (rating === null && result.snippet) {
-    const snippetRating = result.snippet.match(/(\d+[.,]?\d*)\s*\/\s*5/);
+    // Match "TrustScore 4.2", "Valutazione 4,2 su 5", "4.2 / 5", "4,2/5"
+    const snippetRating =
+      result.snippet.match(/trustscore\s+(\d+[.,]?\d*)/i) ||
+      result.snippet.match(/valutazione\s+(\d+[.,]?\d*)/i) ||
+      result.snippet.match(/(\d+[.,]?\d*)\s*(?:\/\s*5|su\s*5|out of 5)/i);
     if (snippetRating) {
-      rating = parseFloat(snippetRating[1].replace(',', '.'));
+      const parsed = parseFloat(snippetRating[1].replace(',', '.'));
+      if (parsed >= 1 && parsed <= 5) {
+        rating = parsed;
+      }
     }
   }
 
   if (totalReviews === 0 && result.snippet) {
-    const snippetReviews = result.snippet.match(/(\d+[\d,\.]*k?)\s*(review|recens)/i);
+    // Match "12.345 recensioni", "1,234 reviews", "12345 recensioni"
+    const snippetReviews = result.snippet.match(/([\d.,]+k?)\s*(review|recens)/i);
     if (snippetReviews) {
       totalReviews = parseReviewCount(snippetReviews[1]);
+    }
+  }
+
+  // Also try title for rating info (Trustpilot often puts it in title)
+  if (rating === null && result.title) {
+    const titleRating =
+      result.title.match(/trustscore\s+(\d+[.,]?\d*)/i) ||
+      result.title.match(/(\d+[.,]?\d*)\s*(?:\/\s*5|su\s*5)/i);
+    if (titleRating) {
+      const parsed = parseFloat(titleRating[1].replace(',', '.'));
+      if (parsed >= 1 && parsed <= 5) {
+        rating = parsed;
+      }
     }
   }
 
@@ -180,6 +201,8 @@ async function searchAllReviewSources(domain: string, apiKey: string): Promise<R
     }
 
     const data: SerperResult = await response.json();
+
+    console.log('Serper results for', domain, ':', JSON.stringify(data.organic?.map(r => ({ link: r.link, title: r.title, rating: r.rating, reviews: r.reviews, snippet: r.snippet?.substring(0, 120) }))));
 
     const foundSites = new Set<string>();
 
