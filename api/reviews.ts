@@ -52,17 +52,11 @@ interface AggregatedReviews {
 
 // ==================== CONFIGURATION ====================
 
-// Review sites to search (order matters - first match wins for each site)
+// Review sites to search
 const REVIEW_SITES = [
   {
     name: 'Trustpilot',
     urlPattern: /trustpilot\.com\/review\//,
-    siteQuery: 'site:trustpilot.com',
-  },
-  {
-    name: 'Recensioni Verificate',
-    urlPattern: /recensioni-verificate\.com/,
-    siteQuery: 'site:recensioni-verificate.com',
   },
 ];
 
@@ -156,13 +150,11 @@ function extractRatingFromResult(result: NonNullable<SerperResult['organic']>[0]
 // ==================== SEARCH FUNCTION ====================
 
 /**
- * Search all review sites with a single combined OR query
- * Uses 1 API call for all review sites
+ * Search all review sites with a single query using plain keywords.
+ * Uses 1 API call — avoids advanced operators (site:, OR) that Serper blocks.
  */
 async function searchAllReviewSources(domain: string, apiKey: string): Promise<ReviewSource[]> {
-  // Build combined OR query for all review sites
-  const sitesQuery = REVIEW_SITES.map(s => s.siteQuery).join(' OR ');
-  const searchQuery = `"${domain}" (${sitesQuery})`;
+  const searchQuery = `${domain} trustpilot recensioni`;
 
   const sources: ReviewSource[] = [];
 
