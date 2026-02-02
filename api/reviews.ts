@@ -31,7 +31,7 @@ interface SerperResult {
     snippet?: string;
     position?: number;
     rating?: number;
-    reviews?: number;
+    ratingCount?: number;
     siteLinks?: Array<{ title: string; link: string }>;
   }>;
 }
@@ -121,17 +121,16 @@ function extractRatingFromResult(result: NonNullable<SerperResult['organic']>[0]
   let rating: number | null = null;
   let totalReviews = 0;
 
-  // Serper provides rating and reviews as direct top-level fields
+  // Serper provides rating as a direct top-level field
   if (result.rating != null && result.rating >= 1 && result.rating <= 5) {
     rating = result.rating;
   }
-  if (result.reviews != null) {
-    totalReviews = result.reviews;
+  if (result.ratingCount != null) {
+    totalReviews = result.ratingCount;
   }
 
-  // Fallback: try to extract from snippet text
+  // Fallback rating: try to extract from snippet text
   if (rating === null && result.snippet) {
-    // Match "TrustScore 4.2", "Valutazione 4,2 su 5", "4.2 / 5", "4,2/5"
     const snippetRating =
       result.snippet.match(/trustscore\s+(\d+[.,]?\d*)/i) ||
       result.snippet.match(/valutazione\s+(\d+[.,]?\d*)/i) ||
@@ -144,24 +143,28 @@ function extractRatingFromResult(result: NonNullable<SerperResult['organic']>[0]
     }
   }
 
+  // Fallback review count: extract from snippet
   if (totalReviews === 0 && result.snippet) {
-    // Match "12.345 recensioni", "1,234 reviews", "12345 recensioni"
-    const snippetReviews = result.snippet.match(/([\d.,]+k?)\s*(review|recens)/i);
+    const snippetReviews =
+      // "43.428 persone" (Trustpilot Italian)
+      result.snippet.match(/([\d.,]+)\s*persone/i) ||
+      // "62 recensioni", "1,234 reviews"
+      result.snippet.match(/([\d.,]+k?)\s*recens\w*/i) ||
+      result.snippet.match(/([\d.,]+k?)\s*reviews?/i) ||
+      // "Recensioni 1029" (number after keyword)
+      result.snippet.match(/recens\w*\s+([\d.,]+)/i);
     if (snippetReviews) {
       totalReviews = parseReviewCount(snippetReviews[1]);
     }
   }
 
-  // Also try title for rating info (Trustpilot often puts it in title)
-  if (rating === null && result.title) {
-    const titleRating =
-      result.title.match(/trustscore\s+(\d+[.,]?\d*)/i) ||
-      result.title.match(/(\d+[.,]?\d*)\s*(?:\/\s*5|su\s*5)/i);
-    if (titleRating) {
-      const parsed = parseFloat(titleRating[1].replace(',', '.'));
-      if (parsed >= 1 && parsed <= 5) {
-        rating = parsed;
-      }
+  // Also try title for review count: "Amazon.it Recensioni 38"
+  if (totalReviews === 0 && result.title) {
+    const titleReviews =
+      result.title.match(/recens\w*\s+([\d.,]+)/i) ||
+      result.title.match(/([\d.,]+k?)\s*recens\w*/i);
+    if (titleReviews) {
+      totalReviews = parseReviewCount(titleReviews[1]);
     }
   }
 
