@@ -18,7 +18,7 @@ import {
   SafeBrowsingService,
   WhoisService,
   SslService,
-  IpqsService,
+  ReputationService,
   ReviewsService,
   HeuristicsService,
 } from './api';
@@ -32,7 +32,7 @@ export class TrustCheckerService {
   private safeBrowsing = inject(SafeBrowsingService);
   private whois = inject(WhoisService);
   private ssl = inject(SslService);
-  private ipqs = inject(IpqsService);
+  private reputation = inject(ReputationService);
   private reviews = inject(ReviewsService);
   private heuristics = inject(HeuristicsService);
 
@@ -57,7 +57,7 @@ export class TrustCheckerService {
       this.runCheck(this.safeBrowsing.check(normalizedUrl), 'safe-browsing'),
       this.runCheck(this.whois.check(normalizedUrl), 'whois'),
       this.runCheck(this.ssl.check(normalizedUrl), 'ssl'),
-      this.runCheck(this.ipqs.check(normalizedUrl), 'ipqs'),
+      this.runCheck(this.reputation.check(normalizedUrl), 'reputation'),
       this.runCheck(this.reviews.check(normalizedUrl), 'reviews'),
       this.runCheck(this.heuristics.check(normalizedUrl), 'heuristics'),
     ];
@@ -189,13 +189,13 @@ export class TrustCheckerService {
     // WHOIS: 10%
     // SSL: 10%
     // Heuristics: 10%
-    // IPQS: 30%
+    // Reputation (VirusTotal): 30%
     // Reviews: 40%
     const weights: Record<string, number> = {
       'safe-browsing': 0,
       whois: 10,
       ssl: 10,
-      ipqs: 30,
+      reputation: 30,
       reviews: 40,
       heuristics: 10,
     };

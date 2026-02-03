@@ -2,7 +2,7 @@ export type CheckType =
   | 'safe-browsing'
   | 'whois'
   | 'ssl'
-  | 'ipqs'
+  | 'reputation'
   | 'reviews'
   | 'heuristics';
 
@@ -29,12 +29,13 @@ export interface SSLDetails {
   daysUntilExpiry: number;
 }
 
-export interface IPQSDetails {
-  fraudScore: number;
-  isProxy: boolean;
-  isVpn: boolean;
-  isTor: boolean;
-  recentAbuse: boolean;
+export interface ReputationDetails {
+  riskScore: number;
+  unsafe: boolean;
+  suspicious: boolean;
+  phishing: boolean;
+  malware: boolean;
+  parking: boolean;
 }
 
 export interface ReviewsDetails {
@@ -60,7 +61,7 @@ export type CheckDetails =
   | SafeBrowsingDetails
   | WhoisDetails
   | SSLDetails
-  | IPQSDetails
+  | ReputationDetails
   | ReviewsDetails
   | HeuristicsDetails
   | { error: boolean }

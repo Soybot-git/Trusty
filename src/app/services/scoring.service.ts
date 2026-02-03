@@ -54,7 +54,7 @@ export class ScoringService {
    * - WHOIS: 10%
    * - SSL: 20%
    * - Heuristics: 10%
-   * - IPQS: 30%
+   * - Reputation (VirusTotal): 30%
    * - Reviews: 30%
    * - Safe Browsing: 0% (filter only)
    */
@@ -134,7 +134,7 @@ export class ScoringService {
       { type: 'whois', priority: 2 },
       { type: 'ssl', priority: 3 },
       { type: 'reviews', priority: 4 },
-      { type: 'ipqs', priority: 5 },
+      { type: 'reputation', priority: 5 },
       { type: 'heuristics', priority: 6 },
     ];
 

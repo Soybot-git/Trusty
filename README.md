@@ -12,7 +12,7 @@ Trusty è una Progressive Web App (PWA) pensata per aiutare gli utenti italiani 
 
 - **Analisi Istantanea** — Incolla un URL e ottieni un punteggio di affidabilità (0-100)
 - **Semaforo Visivo** — Verde (sicuro), giallo (attenzione), rosso (pericolo)
-- **Multi-Source Verification** — Controlli incrociati da Google Safe Browsing, Trustpilot, IPQS e altri
+- **Multi-Source Verification** — Controlli incrociati da Google Safe Browsing, VirusTotal, Trustpilot e altri
 - **PWA Installabile** — Installa l'app sul tuo dispositivo con un tap
 - **Condivisione Risultati** — Condividi facilmente il risultato con amici
 - **Segnalazione Anomalie** — Segnala risultati errati direttamente dall'app
@@ -29,8 +29,8 @@ Il punteggio finale (0-100) è calcolato combinando diversi controlli:
 | Check | Peso | Descrizione |
 |-------|------|-------------|
 | Google Safe Browsing | Filtro | Blocco immediato se rilevato malware/phishing |
-| Reputazione (IPQS) | 30% | Fraud score e attività sospette |
-| Recensioni | 30% | Trustpilot, Recensioni Verificate (min. 20 recensioni) |
+| Reputazione (VirusTotal) | 30% | Analisi dominio da 70+ engine di sicurezza |
+| Recensioni (Trustpilot) | 30% | Rating e numero recensioni (min. 20 recensioni) |
 | Certificato SSL | 20% | Verifica connessione sicura HTTPS |
 | Età Dominio | 10% | Domini recenti sono più rischiosi |
 | Euristiche Trusty | 10% | Typosquatting, TLD sospetti, pattern anomali |
@@ -46,15 +46,22 @@ Il punteggio finale (0-100) è calcolato combinando diversi controlli:
 
 | Punteggio | Stato | Significato |
 |-----------|-------|-------------|
-| ≥ 70 | 🟢 Sicuro | Il sito appare affidabile |
-| 40-69 | 🟡 Attenzione | Procedi con cautela |
-| < 40 | 🔴 Pericolo | Sito probabilmente non affidabile |
+| >= 70 | Sicuro | Il sito appare affidabile |
+| 40-69 | Attenzione | Procedi con cautela |
+| < 40 | Pericolo | Sito probabilmente non affidabile |
 
 ### Override di Sicurezza
 
 - Malware/phishing rilevato → **Score 0** (blocco immediato)
 - Dominio < 30 giorni → **Max score 50**
-- < 20 recensioni → **Max score 60**
+
+### Recensioni
+
+Le recensioni vengono recuperate direttamente da Trustpilot tramite parsing dei dati strutturati (JSON-LD) dalla pagina di review del dominio. Se un sito ha meno di 20 recensioni su Trustpilot, il check recensioni assegna score 0 (il punteggio massimo senza recensioni è 70).
+
+### Reputazione Dominio
+
+La reputazione del dominio viene analizzata tramite VirusTotal, che aggrega i risultati di oltre 70 engine di sicurezza. Il risk score viene calcolato come percentuale di engine che segnalano il dominio come malicious o suspicious.
 
 ---
 
@@ -72,8 +79,8 @@ Il punteggio finale (0-100) è calcolato combinando diversi controlli:
 
 ### API Esterne
 - Google Safe Browsing API
-- IPQualityScore (IPQS)
-- SerpAPI (per aggregare recensioni)
+- VirusTotal API (reputazione dominio)
+- Trustpilot (scraping dati strutturati JSON-LD)
 - RDAP / who.is (età dominio)
 
 ---
@@ -107,11 +114,11 @@ Crea un file `.env` o configura in Vercel Dashboard:
 
 | Variabile | Descrizione | Obbligatoria |
 |-----------|-------------|--------------|
-| `GOOGLE_SAFE_BROWSING_KEY` | API key Google Safe Browsing | Sì |
-| `IPQS_API_KEY` | API key IPQualityScore | Sì |
-| `SERP_API_KEY` | API key SerpApi | Sì |
+| `GOOGLE_SAFE_BROWSING_KEY` | API key Google Safe Browsing | Si |
+| `VIRUSTOTAL_API_KEY` | API key VirusTotal | Si |
 | `UPSTASH_REDIS_REST_URL` | URL Redis Upstash | No (caching) |
 | `UPSTASH_REDIS_REST_TOKEN` | Token Redis Upstash | No (caching) |
+| `DISABLE_CACHE` | Disabilita cache Redis (`true`/`false`) | No |
 
 ---
 
@@ -135,12 +142,12 @@ trusty/
 │   │   └── models/
 │   └── assets/
 ├── api/                          # Vercel Functions
-│   ├── check.ts                  # Endpoint principale
+│   ├── check.ts                  # Endpoint principale (mock)
 │   ├── safe-browsing.ts          # Google Safe Browsing
 │   ├── whois.ts                  # RDAP + who.is
 │   ├── ssl.ts                    # Verifica certificato
-│   ├── ipqs.ts                   # IPQualityScore
-│   ├── reviews.ts                # Aggregatore recensioni
+│   ├── reputation.ts             # VirusTotal (reputazione dominio)
+│   ├── reviews.ts                # Trustpilot (recensioni)
 │   ├── heuristics.ts             # Controlli euristici
 │   └── lib/                      # Utilities condivise
 └── vercel.json

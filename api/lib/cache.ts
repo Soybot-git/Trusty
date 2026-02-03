@@ -4,7 +4,7 @@ export const CACHE_TTL = {
   SSL: 7 * 24 * 60 * 60,         // 7 days
   HEURISTICS: 30 * 24 * 60 * 60, // 30 days
   SAFE_BROWSING: 24 * 60 * 60,   // 24 hours
-  IPQS: 24 * 60 * 60,            // 24 hours
+  REPUTATION: 24 * 60 * 60,      // 24 hours
   REVIEWS: 6 * 60 * 60,          // 6 hours
 } as const;
 

@@ -78,21 +78,20 @@ async function checkSsl(domain: string): Promise<CheckResult> {
   };
 }
 
-async function checkIpqs(domain: string): Promise<CheckResult> {
-  // TODO: Integrate with IPQualityScore API
-  // const apiKey = process.env.IPQS_API_KEY;
+async function checkReputation(domain: string): Promise<CheckResult> {
   return {
-    type: 'ipqs',
+    type: 'reputation',
     status: 'safe',
     score: 85,
     weight: 15,
     message: 'Nessun rischio significativo',
     details: {
-      fraudScore: 15,
-      isProxy: false,
-      isVpn: false,
-      isTor: false,
-      recentAbuse: false,
+      riskScore: 15,
+      unsafe: false,
+      suspicious: false,
+      phishing: false,
+      malware: false,
+      parking: false,
     },
   };
 }
@@ -179,7 +178,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       checkSafeBrowsing(domain),
       checkWhois(domain),
       checkSsl(domain),
-      checkIpqs(domain),
+      checkReputation(domain),
       checkReviews(domain),
       checkHeuristics(domain),
     ]);
