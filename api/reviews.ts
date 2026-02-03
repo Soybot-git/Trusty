@@ -83,15 +83,24 @@ async function fetchTrustpilotData(domain: string): Promise<{ rating: number | n
       const jsonContent = block.replace(/<script[^>]*>/, '').replace(/<\/script>/, '');
       try {
         const parsed = JSON.parse(jsonContent);
-        const items = Array.isArray(parsed) ? parsed : [parsed];
+
+        // Collect all items: handle top-level, arrays, and @graph nesting
+        const items: any[] = [];
+        const roots = Array.isArray(parsed) ? parsed : [parsed];
+        for (const root of roots) {
+          items.push(root);
+          if (root['@graph']) {
+            const graphItems = Array.isArray(root['@graph']) ? root['@graph'] : [root['@graph']];
+            items.push(...graphItems);
+          }
+        }
+
         for (const item of items) {
-          console.log(`JSON-LD item keys: ${Object.keys(item).join(', ')}, @type: ${item['@type']}, snippet: ${JSON.stringify(item).substring(0, 300)}`);
-          const aggRating = item.aggregateRating;
-          if (aggRating?.ratingValue) {
-            console.log(`Found rating: ${aggRating.ratingValue}, reviewCount: ${aggRating.reviewCount}`);
+          if (item.aggregateRating?.ratingValue) {
+            console.log(`Found rating in @type=${item['@type']}: ${item.aggregateRating.ratingValue}, reviewCount: ${item.aggregateRating.reviewCount}`);
             return {
-              rating: parseFloat(String(aggRating.ratingValue).replace(',', '.')),
-              totalReviews: parseInt(String(aggRating.reviewCount || '0'), 10) || 0,
+              rating: parseFloat(String(item.aggregateRating.ratingValue).replace(',', '.')),
+              totalReviews: parseInt(String(item.aggregateRating.reviewCount || '0'), 10) || 0,
               url: trustpilotUrl,
             };
           }
@@ -121,7 +130,7 @@ interface ReviewScore {
 function getScoreFromReviewData(rating: number | null, totalReviews: number): ReviewScore {
   if (rating === null || totalReviews < MIN_REVIEWS_THRESHOLD) {
     return {
-      score: 50,
+      score: 0,
       status: 'warning',
       message: 'Non ci sono abbastanza recensioni',
       insufficientReviews: true,

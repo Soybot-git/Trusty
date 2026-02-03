@@ -101,10 +101,6 @@ export class ScoringService {
       }
     }
 
-    // Insufficient reviews (< 20) = max score 60
-    if (reviewsCheck && hasInsufficientReviews(reviewsCheck.details)) {
-      finalScore = Math.min(finalScore, 60);
-    }
 
     return this.createResult(url, domain, Math.round(finalScore), checks);
   }
