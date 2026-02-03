@@ -8,7 +8,7 @@
     </button>
 
     <div class="modal-header">
-      <h2>Segnala un'anomalia</h2>
+      <h2>Segnala un'anomalia o contattaci</h2>
     </div>
 
     @if (isSuccess) {
@@ -25,7 +25,7 @@
     } @else {
       <form class="modal-body" (ngSubmit)="onSubmit()">
         <div class="form-group">
-          <label for="problemType">Tipo di problema *</label>
+          <label for="problemType">Tipo di segnalazione *</label>
           <select
             id="problemType"
             [(ngModel)]="problemType"

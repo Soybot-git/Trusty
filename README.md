@@ -118,7 +118,6 @@ Crea un file `.env` o configura in Vercel Dashboard:
 | `VIRUSTOTAL_API_KEY` | API key VirusTotal | Si |
 | `UPSTASH_REDIS_REST_URL` | URL Redis Upstash | No (caching) |
 | `UPSTASH_REDIS_REST_TOKEN` | Token Redis Upstash | No (caching) |
-| `DISABLE_CACHE` | Disabilita cache Redis (`true`/`false`) | No |
 
 ---
 
@@ -176,7 +175,8 @@ Le contribuzioni sono benvenute!
 
 ## Disclaimer
 
-Trusty fornisce una **stima automatizzata** basata su dati pubblicamente verificabili. Il punteggio rappresenta un'opinione tecnica e **non costituisce prova** di legittimità o illegittimità di alcun sito.
+Trusty fornisce una **stima automatizzata** basata su dati pubblicamente verificabili. Il punteggio rappresenta un'opinione tecnica e **non costituisce prova di legittimità o illegittimità di alcun sito**.
+Verifica sempre autonomamente prima di effettuare acquisti, specialmente per importi elevati.
 
 **Verifica sempre autonomamente** prima di effettuare acquisti, specialmente per importi elevati.
 
