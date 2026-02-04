@@ -398,10 +398,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Add all warnings/dangers to details
   if (warnings.length > 0) {
-    details.warnings = warnings;
+    details['warnings'] = warnings;
   }
   if (dangers.length > 0) {
-    details.dangers = dangers;
+    details['dangers'] = dangers;
   }
 
   const result: HeuristicsResult = {

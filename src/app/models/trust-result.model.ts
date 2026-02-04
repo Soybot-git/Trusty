@@ -30,13 +30,20 @@ export function getTrustLevel(score: number): TrustLevel {
   return 'danger';
 }
 
-export function getTrustLevelLabel(level: TrustLevel): string {
-  switch (level) {
-    case 'safe':
-      return 'Affidabile';
-    case 'caution':
-      return 'Attenzione';
-    case 'danger':
-      return 'Pericoloso';
-  }
-}
+export const TRUST_LEVEL_LABEL: Record<TrustLevel, string> = {
+  safe: 'Affidabile',
+  caution: 'Attenzione',
+  danger: 'Pericoloso',
+};
+
+export const TRUST_LEVEL_ICON: Record<TrustLevel, string> = {
+  safe: '✓',
+  caution: '!',
+  danger: '✕',
+};
+
+export const TRUST_LEVEL_EMOJI: Record<TrustLevel, string> = {
+  safe: '🟢',
+  caution: '🟡',
+  danger: '🔴',
+};

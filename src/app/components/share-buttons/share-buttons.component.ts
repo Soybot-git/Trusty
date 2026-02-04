@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TrustResult, getTrustLevelLabel } from '../../models';
+import { TrustResult, TRUST_LEVEL_LABEL, TRUST_LEVEL_EMOJI } from '../../models';
 
 @Component({
   selector: 'app-share-buttons',
@@ -17,9 +17,8 @@ export class ShareButtonsComponent {
   private getShareText(): string {
     if (!this.result) return '';
 
-    const emoji =
-      this.result.level === 'safe' ? '🟢' : this.result.level === 'caution' ? '🟡' : '🔴';
-    const label = getTrustLevelLabel(this.result.level);
+    const emoji = TRUST_LEVEL_EMOJI[this.result.level];
+    const label = TRUST_LEVEL_LABEL[this.result.level];
 
     return `${emoji} Trusty: ${this.result.domain} - ${this.result.score}/100 (${label})\n\nVerifica anche tu: Trusty.app`;
   }

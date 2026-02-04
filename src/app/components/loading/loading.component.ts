@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,6 +8,4 @@ import { CommonModule } from '@angular/common';
   templateUrl: './loading.component.html',
   styleUrl: './loading.component.css',
 })
-export class LoadingComponent {
-  @Input() message = 'Analisi in corso';
-}
+export class LoadingComponent {}

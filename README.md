@@ -63,6 +63,25 @@ Le recensioni vengono recuperate direttamente da Trustpilot tramite parsing dei 
 
 La reputazione del dominio viene analizzata tramite VirusTotal, che aggrega i risultati di oltre 70 engine di sicurezza. Il risk score viene calcolato come percentuale di engine che segnalano il dominio come malicious o suspicious.
 
+### Sistema di Caching
+
+Il caching opera su due livelli per ridurre le chiamate alle API esterne e migliorare i tempi di risposta.
+
+**Client (localStorage)** — I risultati completi vengono salvati nel browser per **24 ore**. Alla scadenza, la entry viene rimossa automaticamente al successivo accesso.
+
+**Server (Upstash Redis)** — Ogni check viene cachato individualmente con TTL diversi in base alla volatilità del dato:
+
+| Check | TTL | Motivazione |
+|-------|-----|-------------|
+| WHOIS | 30 giorni | Dati di registrazione stabili |
+| Euristiche | 30 giorni | Analisi pattern statica |
+| SSL | 7 giorni | Certificati cambiano raramente |
+| Safe Browsing | 24 ore (1 ora se pericoloso) | Minacce aggiornate frequentemente |
+| Reputazione (VirusTotal) | 24 ore | Risk score dinamico |
+| Recensioni (Trustpilot) | 6 ore | Dato più volatile |
+
+Il caching Redis è opzionale: se le credenziali Upstash non sono configurate, l'app funziona comunque senza cache server-side.
+
 ---
 
 ## Tech Stack

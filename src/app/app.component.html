@@ -1,7 +1,7 @@
 <div class="app-container">
   <header class="header">
     <img src="assets/logo.svg" alt="Trusty" class="logo-img" />
-    <div class="tagline">Scopri in pochi secondi se il sito su cui vuoi fare acquisti è sicuro.</div>
+    <div class="tagline">Verifica l'affidabilità di un e-commerce in pochi secondi</div>
   </header>
 
   <main class="main">
@@ -27,7 +27,7 @@
     }
 
     @if (isLoading) {
-      <app-loading message="Analisi in corso" />
+      <app-loading />
     }
 
     @if (result && !isLoading) {

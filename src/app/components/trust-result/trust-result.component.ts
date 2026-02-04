@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TrustResult, getTrustLevelLabel } from '../../models';
+import { TrustResult, TRUST_LEVEL_LABEL, TRUST_LEVEL_ICON } from '../../models';
 
 @Component({
   selector: 'app-trust-result',
@@ -12,25 +12,11 @@ import { TrustResult, getTrustLevelLabel } from '../../models';
 export class TrustResultComponent {
   @Input() result: TrustResult | null = null;
 
+  readonly TRUST_LEVEL_LABEL = TRUST_LEVEL_LABEL;
+  readonly TRUST_LEVEL_ICON = TRUST_LEVEL_ICON;
+
   // Circle circumference: 2 * PI * 54 (radius) = 339.292
   private readonly circumference = 339.292;
-
-  getLevelLabel(level: string): string {
-    return getTrustLevelLabel(level as 'safe' | 'caution' | 'danger');
-  }
-
-  getLevelIcon(level: string): string {
-    switch (level) {
-      case 'safe':
-        return '✓';
-      case 'caution':
-        return '!';
-      case 'danger':
-        return '✕';
-      default:
-        return '?';
-    }
-  }
 
   getStrokeDasharray(): string {
     return `${this.circumference}`;

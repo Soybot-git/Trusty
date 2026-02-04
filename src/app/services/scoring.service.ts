@@ -153,24 +153,17 @@ export class ScoringService {
     // Take top 4 most relevant
     for (const check of sortedChecks.slice(0, 4)) {
       bullets.push({
-        icon: this.getIconForStatus(check.status),
+        icon: STATUS_ICON[check.status] ?? 'warning',
         text: check.message,
       });
     }
 
     return bullets;
   }
-
-  private getIconForStatus(status: string): 'check' | 'warning' | 'danger' {
-    switch (status) {
-      case 'safe':
-        return 'check';
-      case 'warning':
-        return 'warning';
-      case 'danger':
-        return 'danger';
-      default:
-        return 'warning';
-    }
-  }
 }
+
+const STATUS_ICON: Record<string, 'check' | 'warning' | 'danger'> = {
+  safe: 'check',
+  warning: 'warning',
+  danger: 'danger',
+};
