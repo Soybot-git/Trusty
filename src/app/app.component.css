@@ -170,16 +170,27 @@
   border-radius: 2px;
 }
 
-.disclaimer {
-  font-size: 11px;
+.disclaimer-short {
+  font-size: 12px;
   color: var(--text-muted);
-  line-height: 1.6;
-  max-width: 380px;
   margin: 0 auto 16px;
-  padding: 14px 18px;
-  background: rgba(0, 191, 99, 0.03);
-  border: 1px solid rgba(0, 191, 99, 0.08);
-  border-radius: 12px;
+  text-align: center;
+}
+
+.disclaimer-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.disclaimer-link:hover {
+  color: var(--primary-dark);
 }
 
 /* Report Button in Footer */

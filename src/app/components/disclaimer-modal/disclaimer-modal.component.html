@@ -1,0 +1,58 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-content" role="dialog" aria-labelledby="disclaimer-title" aria-describedby="disclaimer-description">
+
+    <div class="modal-header">
+      <h2 id="disclaimer-title">
+        <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Attenzione
+      </h2>
+    </div>
+
+    <div class="modal-body" id="disclaimer-description">
+      <section class="info-section">
+        <h3>Cosa rappresenta il punteggio</h3>
+        <p>
+          Trusty fornisce una <strong>stima automatizzata</strong> basata su dati pubblicamente verificabili.
+          Il punteggio rappresenta un'opinione tecnica e <strong>non costituisce prova di legittimità o illegittimità</strong> di alcun sito.
+        </p>
+      </section>
+
+      <section class="info-section">
+        <h3>Cosa valutiamo esattamente</h3>
+        <p>
+          I controlli di Trusty valutano se un sito web è <strong>fraudolento o sospetto</strong> (malware, phishing, truffe).
+        </p>
+        <p>
+          <strong>NON valutiamo</strong> la qualità dei prodotti/servizi offerti, i tempi di consegna, l'assistenza clienti o altri aspetti dell'esperienza d'acquisto (eccetto marginalmente attraverso le recensioni aggregate).
+        </p>
+        <p style="font-size: 0.9em; margin-top: 12px;">
+          Un punteggio alto indica che il sito <em>probabilmente non è una truffa</em>, ma non garantisce un'esperienza d'acquisto positiva.
+        </p>
+      </section>
+
+      <section class="info-section">
+        <h3>Importante</h3>
+        <p>
+          <strong>Nessun sistema è infallibile</strong>: alcuni siti fraudolenti potrebbero adottare
+          strategie sofisticate per ingannare i controlli automatici.
+        </p>
+        <p>
+          <strong>Verifica sempre autonomamente</strong> prima di effettuare acquisti, specialmente per
+          importi elevati. In caso di dubbi, preferisci metodi di pagamento che offrono protezione acquirenti.
+        </p>
+      </section>
+    </div>
+
+    <div class="modal-footer">
+      <label class="checkbox-container">
+        <input type="checkbox" [(ngModel)]="dontShow" />
+        <span class="checkbox-label">Non mostrare più questo messaggio</span>
+      </label>
+      <button class="got-it-btn" (click)="onGotItClick()">Ho capito</button>
+    </div>
+  </div>
+</div>

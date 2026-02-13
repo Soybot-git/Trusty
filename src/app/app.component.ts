@@ -10,6 +10,7 @@ import {
   InfoModalComponent,
   HelpModalComponent,
   ReportModalComponent,
+  DisclaimerModalComponent,
 } from './components';
 
 @Component({
@@ -24,6 +25,7 @@ import {
     InfoModalComponent,
     HelpModalComponent,
     ReportModalComponent,
+    DisclaimerModalComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -38,7 +40,10 @@ export class AppComponent {
   showInfoModal = false;
   showHelpModal = false;
   showReportModal = false;
+  showDisclaimerModal = false;
+  isDisclaimerAcknowledged = false;
 
+  private readonly DISCLAIMER_KEY = 'trusty_disclaimer_acknowledged';
   private deferredPrompt: BeforeInstallPromptEvent | null = null;
 
   constructor() {
@@ -68,6 +73,7 @@ export class AppComponent {
       next: (result) => {
         this.result = result;
         this.isLoading = false;
+        this.checkAndShowDisclaimer();
       },
       error: (err) => {
         console.error('Check failed:', err);
@@ -96,6 +102,48 @@ export class AppComponent {
     }
 
     this.deferredPrompt = null;
+  }
+
+  private checkAndShowDisclaimer(): void {
+    try {
+      const acknowledged = localStorage.getItem(this.DISCLAIMER_KEY);
+      if (!acknowledged) {
+        setTimeout(() => {
+          this.showDisclaimerModal = true;
+        }, 300);
+      }
+    } catch (e) {
+      // localStorage non disponibile (private browsing), mostra sempre
+      setTimeout(() => {
+        this.showDisclaimerModal = true;
+      }, 300);
+    }
+  }
+
+  onDisclaimerDontShowAgain(dontShow: boolean): void {
+    try {
+      if (dontShow) {
+        localStorage.setItem(this.DISCLAIMER_KEY, 'true');
+      } else {
+        localStorage.removeItem(this.DISCLAIMER_KEY);
+      }
+    } catch (e) {
+      console.warn('localStorage non disponibile');
+    }
+  }
+
+  onDisclaimerClose(): void {
+    this.showDisclaimerModal = false;
+  }
+
+  openDisclaimerModal(): void {
+    try {
+      const acknowledged = localStorage.getItem(this.DISCLAIMER_KEY);
+      this.isDisclaimerAcknowledged = acknowledged === 'true';
+    } catch (e) {
+      this.isDisclaimerAcknowledged = false;
+    }
+    this.showDisclaimerModal = true;
   }
 }
 

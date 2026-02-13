@@ -44,9 +44,11 @@
   </main>
 
   <footer class="footer">
-    <p class="disclaimer">
-      Trusty fornisce una stima automatizzata basata su dati pubblicamente verificabili. Il punteggio rappresenta un'opinione tecnica e non costituisce prova di legittimità o illegittimità di alcun sito.
-      Verifica sempre autonomamente prima di effettuare acquisti, specialmente per importi elevati.
+    <p class="disclaimer-short">
+      Trusty fornisce stime automatizzate.<br>
+      <button class="disclaimer-link" (click)="openDisclaimerModal()">
+        Leggi disclaimer completo
+      </button>
     </p>
 
     <button class="report-btn" (click)="showReportModal = true">
@@ -75,5 +77,13 @@
 
   @if (showReportModal) {
     <app-report-modal (close)="showReportModal = false" />
+  }
+
+  @if (showDisclaimerModal) {
+    <app-disclaimer-modal
+      [isAcknowledged]="isDisclaimerAcknowledged"
+      (close)="onDisclaimerClose()"
+      (dontShowAgain)="onDisclaimerDontShowAgain($event)"
+    />
   }
 </div>
