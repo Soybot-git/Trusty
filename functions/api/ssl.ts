@@ -1,7 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as tls from 'tls';
 import * as net from 'net';
-import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache.js';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from '../lib/cache';
+import type { Env } from '../lib/types';
 
 interface SslResult {
   type: string;
@@ -49,8 +49,8 @@ function getCertificateInfo(domain: string): Promise<CertificateInfo> {
       {
         host: domain,
         port: 443,
-        servername: domain, // SNI support
-        rejectUnauthorized: false, // Allow self-signed to get info
+        servername: domain,
+        rejectUnauthorized: false,
         timeout: 10000,
       },
       () => {
@@ -67,16 +67,13 @@ function getCertificateInfo(domain: string): Promise<CertificateInfo> {
         const validFrom = new Date(cert.valid_from);
         const daysUntilExpiry = Math.floor((validTo.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-        // Check if certificate is valid (not expired and not yet valid)
         const isValid = socket.authorized || (now >= validFrom && now <= validTo);
 
-        // Extract issuer organization
         let issuer = 'Sconosciuto';
         if (cert.issuer) {
           issuer = cert.issuer.O || cert.issuer.CN || 'Sconosciuto';
         }
 
-        // Extract subject
         let subject = domain;
         if (cert.subject) {
           subject = cert.subject.CN || domain;
@@ -134,32 +131,53 @@ function getScoreFromCertificate(cert: CertificateInfo): { score: number; status
   return { score: 100, status: 'safe', message: 'Certificato SSL valido e sicuro' };
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env } = context;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  const { url } = req.body;
+  const { url } = await request.json() as { url?: string };
 
   if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+    return new Response(JSON.stringify({ error: 'URL is required' }), {
+      status: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   const domain = extractDomain(url);
+  const kv = env.TRUSTY_KV;
   const cacheKey = getCacheKey('ssl', domain);
 
-  // Check cache first
-  const cached = await getCached<SslResult>(cacheKey);
+  const cached = await getCached<SslResult>(kv, cacheKey);
   if (cached) {
-    return res.status(200).json({ result: cached });
+    return new Response(JSON.stringify({ result: cached }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   try {
@@ -182,18 +200,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     };
 
-    // Cache the result
-    await setCache(cacheKey, result, CACHE_TTL.SSL);
+    await setCache(kv, cacheKey, result, CACHE_TTL.SSL);
 
-    return res.status(200).json({ result });
+    return new Response(JSON.stringify({ result }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('SSL check error:', error);
 
-    // If we can't connect via HTTPS, the site might not have SSL
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('getaddrinfo')) {
-      return res.status(200).json({
+      return new Response(JSON.stringify({
         result: {
           type: 'ssl',
           status: 'danger',
@@ -205,11 +226,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             error: 'Domain not found',
           },
         },
+      }), {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
       });
     }
 
     if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
-      return res.status(200).json({
+      return new Response(JSON.stringify({
         result: {
           type: 'ssl',
           status: 'danger',
@@ -221,10 +247,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             error: 'HTTPS connection refused',
           },
         },
+      }), {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
       });
     }
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       result: {
         type: 'ssl',
         status: 'warning',
@@ -236,6 +267,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: errorMessage,
         },
       },
+    }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
     });
   }
-}
+};

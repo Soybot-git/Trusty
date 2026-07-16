@@ -1,5 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache.js';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from '../lib/cache';
+import type { Env } from '../lib/types';
 
 interface ReviewsResult {
   type: string;
@@ -21,8 +21,6 @@ interface ReviewsResult {
     error?: string;
   };
 }
-
-// ==================== HELPER FUNCTIONS ====================
 
 function extractDomain(url: string): string {
   try {
@@ -47,17 +45,9 @@ function formatReviewCount(count: number): string {
   return count.toString();
 }
 
-// Minimum reviews required to consider reviews valid
 const MIN_REVIEWS_THRESHOLD = 20;
-
-// Fixed weight for reviews (30%)
 const REVIEWS_WEIGHT = 30;
 
-// ==================== TRUSTPILOT ====================
-
-/**
- * Fetch the Trustpilot review page for a domain and extract rating data from JSON-LD.
- */
 async function fetchTrustpilotData(domain: string): Promise<{ rating: number | null; totalReviews: number; url: string }> {
   const trustpilotUrl = `https://it.trustpilot.com/review/${domain}`;
 
@@ -84,7 +74,6 @@ async function fetchTrustpilotData(domain: string): Promise<{ rating: number | n
       try {
         const parsed = JSON.parse(jsonContent);
 
-        // Collect all items: handle top-level, arrays, and @graph nesting
         const items: any[] = [];
         const roots = Array.isArray(parsed) ? parsed : [parsed];
         for (const root of roots) {
@@ -117,8 +106,6 @@ async function fetchTrustpilotData(domain: string): Promise<{ rating: number | n
     return { rating: null, totalReviews: 0, url: trustpilotUrl };
   }
 }
-
-// ==================== SCORING ====================
 
 interface ReviewScore {
   score: number;
@@ -157,34 +144,53 @@ function getScoreFromReviewData(rating: number | null, totalReviews: number): Re
   return { score: 15, status: 'danger', message: `Valutazione pessima: ${rating}/5${reviewInfo}`, insufficientReviews: false };
 }
 
-// ==================== MAIN HANDLER ====================
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env } = context;
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  const { url } = req.body;
+  const { url } = await request.json() as { url?: string };
 
   if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+    return new Response(JSON.stringify({ error: 'URL is required' }), {
+      status: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   const domain = extractDomain(url);
+  const kv = env.TRUSTY_KV;
   const cacheKey = getCacheKey('reviews', domain);
 
-  // Check cache first
-  const cached = await getCached<ReviewsResult>(cacheKey);
+  const cached = await getCached<ReviewsResult>(kv, cacheKey);
   if (cached) {
-    return res.status(200).json({ result: cached });
+    return new Response(JSON.stringify({ result: cached }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   try {
@@ -206,14 +212,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     };
 
-    // Cache the result
-    await setCache(cacheKey, result, CACHE_TTL.REVIEWS);
+    await setCache(kv, cacheKey, result, CACHE_TTL.REVIEWS);
 
-    return res.status(200).json({ result });
+    return new Response(JSON.stringify({ result }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Reviews error:', error);
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       result: {
         type: 'reviews',
         status: 'warning',
@@ -229,6 +239,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: error instanceof Error ? error.message : 'Unknown error',
         },
       },
+    }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
     });
   }
-}
+};

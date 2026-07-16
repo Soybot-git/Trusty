@@ -1,5 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache.js';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from '../lib/cache';
+import type { Env } from '../lib/types';
 
 interface ReputationResult {
   type: string;
@@ -61,10 +61,6 @@ function extractDomain(url: string): string {
   }
 }
 
-/**
- * Derive risk data from VirusTotal response.
- * Calculates a 0-100 risk score and boolean flags.
- */
 function deriveRiskData(vt: VirusTotalResponse): DerivedRiskData {
   const stats = vt.data.attributes.last_analysis_stats;
   const total = stats.harmless + stats.malicious + stats.suspicious + stats.undetected + stats.timeout;
@@ -86,14 +82,12 @@ function deriveRiskData(vt: VirusTotalResponse): DerivedRiskData {
     phishing,
     malware,
     parking,
-    spamming: false, // not available from VirusTotal
+    spamming: false,
     category: categoryValues[0] || null,
   };
 }
 
 function getScoreFromRiskScore(riskScore: number, data: DerivedRiskData): { score: number; status: string; message: string } {
-  // riskScore: 0 = safe, 100 = dangerous (inverted from our scale)
-
   if (data.malware) {
     return { score: 0, status: 'danger', message: 'Malware rilevato sul sito' };
   }
@@ -125,30 +119,46 @@ function getScoreFromRiskScore(riskScore: number, data: DerivedRiskData): { scor
   return { score: 100, status: 'safe', message: 'Nessun rischio significativo' };
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env } = context;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  const { url } = req.body;
+  const { url } = await request.json() as { url?: string };
 
   if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+    return new Response(JSON.stringify({ error: 'URL is required' }), {
+      status: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  const apiKey = process.env['VIRUSTOTAL_API_KEY'];
+  const apiKey = env.VIRUSTOTAL_API_KEY;
 
   if (!apiKey) {
     console.error('VIRUSTOTAL_API_KEY not configured');
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       result: {
         type: 'reputation',
         status: 'warning',
@@ -159,16 +169,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: 'API not configured',
         },
       },
+    }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
     });
   }
 
   const domain = extractDomain(url);
+  const kv = env.TRUSTY_KV;
   const cacheKey = getCacheKey('reputation', domain);
 
-  // Check cache first
-  const cached = await getCached<ReputationResult>(cacheKey);
+  const cached = await getCached<ReputationResult>(kv, cacheKey);
   if (cached) {
-    return res.status(200).json({ result: cached });
+    return new Response(JSON.stringify({ result: cached }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   try {
@@ -212,14 +232,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     };
 
-    // Cache the result
-    await setCache(cacheKey, result, CACHE_TTL.REPUTATION);
+    await setCache(kv, cacheKey, result, CACHE_TTL.REPUTATION);
 
-    return res.status(200).json({ result });
+    return new Response(JSON.stringify({ result }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('VirusTotal error:', error);
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       result: {
         type: 'reputation',
         status: 'warning',
@@ -230,6 +254,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: error instanceof Error ? error.message : 'Unknown error',
         },
       },
+    }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
     });
   }
-}
+};

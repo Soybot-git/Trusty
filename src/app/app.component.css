@@ -37,7 +37,7 @@
 }
 
 .tagline {
-  font-size: 15px;
+  font-size: clamp(0.8125rem, 1.25vw + 0.25rem, 0.9375rem);
   color: var(--text-secondary);
   font-weight: 500;
   animation: fadeIn 0.8s ease-out 0.2s both;
@@ -67,7 +67,7 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 16px;
   color: var(--danger);
-  font-size: 14px;
+  font-size: clamp(0.75rem, 1vw + 0.25rem, 0.875rem);
   font-weight: 500;
   max-width: 420px;
   width: 90%;
@@ -94,7 +94,7 @@
 }
 
 .error-icon {
-  font-size: 20px;
+  font-size: clamp(1rem, 2vw + 0.25rem, 1.25rem);
 }
 
 /* Empty State */
@@ -145,7 +145,7 @@
 }
 
 .empty-state-text {
-  font-size: 15px;
+  font-size: clamp(0.8125rem, 1.25vw + 0.25rem, 0.9375rem);
   color: var(--text-secondary);
   font-weight: 500;
   text-align: center;
@@ -171,7 +171,7 @@
 }
 
 .disclaimer-short {
-  font-size: 12px;
+  font-size: clamp(0.625rem, 0.5vw + 0.25rem, 0.75rem);
   color: var(--text-muted);
   margin: 0 auto 16px;
   text-align: center;
@@ -196,7 +196,7 @@
 /* Report Button in Footer */
 .report-btn {
   padding: 12px 20px;
-  font-size: 13px;
+  font-size: clamp(0.6875rem, 0.75vw + 0.25rem, 0.8125rem);
   font-weight: 500;
   color: var(--danger);
   background: transparent;
@@ -279,7 +279,7 @@
   color: white;
   padding: 8px 12px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: clamp(0.6875rem, 0.75vw + 0.25rem, 0.8125rem);
   font-weight: 500;
   opacity: 0;
   visibility: hidden;
@@ -315,7 +315,7 @@
   }
 
   .tagline {
-    font-size: 17px;
+    font-size: clamp(0.9375rem, 1.75vw + 0.25rem, 1.0625rem);
   }
 
   .main {

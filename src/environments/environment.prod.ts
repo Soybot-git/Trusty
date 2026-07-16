@@ -1,10 +1,6 @@
 export const environment = {
   production: true,
   apiBaseUrl: '/api',
-  cacheTimeout: 24 * 60 * 60 * 1000, // 24 hours in ms
-  disableCache: false, // TODO: set to false when done testing
-  analytics: {
-    enabled: true,   // Enabled in production
-    debug: false
-  }
+  cacheTimeout: 24 * 60 * 60 * 1000, // 24 ore in ms
+  disableCache: false, // Impostare a false quando il testing è completato
 };

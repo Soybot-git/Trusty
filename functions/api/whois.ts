@@ -1,5 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache.js';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from '../lib/cache';
+import type { Env } from '../lib/types';
 
 interface WhoisResult {
   type: string;
@@ -57,7 +57,6 @@ function getTld(domain: string): string {
 function getRdapUrlsForDomain(domain: string): string[] {
   const tld = getTld(domain);
 
-  // TLD-specific RDAP servers that are known to work
   const tldServers: Record<string, string> = {
     'com': `https://rdap.verisign.com/com/v1/domain/${domain}`,
     'net': `https://rdap.verisign.com/net/v1/domain/${domain}`,
@@ -68,18 +67,15 @@ function getRdapUrlsForDomain(domain: string): string[] {
 
   const urls: string[] = [];
 
-  // Add TLD-specific server first if available
   if (tldServers[tld]) {
     urls.push(tldServers[tld]);
   }
 
-  // Add generic fallback
   urls.push(`https://rdap.org/domain/${domain}`);
 
   return urls;
 }
 
-// Fallback: try to get creation date from who.is (scraping)
 async function getCreationDateFromWhoIs(domain: string): Promise<{ created: string | null; registrar: string | null }> {
   try {
     const response = await fetch(`https://who.is/whois/${domain}`, {
@@ -94,11 +90,9 @@ async function getCreationDateFromWhoIs(domain: string): Promise<{ created: stri
 
     const html = await response.text();
 
-    // Extract creation date using regex patterns
     let created: string | null = null;
     let registrar: string | null = null;
 
-    // Look for common patterns in WHOIS data
     const createdPatterns = [
       /Creation Date:\s*(\d{4}-\d{2}-\d{2})/i,
       /Created:\s*(\d{4}-\d{2}-\d{2})/i,
@@ -112,7 +106,6 @@ async function getCreationDateFromWhoIs(domain: string): Promise<{ created: stri
       const match = html.match(pattern);
       if (match) {
         created = match[1];
-        // Normalize date format
         if (created.includes('/')) {
           const [day, month, year] = created.split('/');
           created = `${year}-${month}-${day}`;
@@ -123,7 +116,6 @@ async function getCreationDateFromWhoIs(domain: string): Promise<{ created: stri
       }
     }
 
-    // Extract registrar
     const registrarMatch = html.match(/Registrar:\s*([^\n<]+)/i);
     if (registrarMatch) {
       registrar = registrarMatch[1].trim();
@@ -158,36 +150,56 @@ function getScoreFromAge(ageDays: number): { score: number; status: string; mess
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env } = context;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  const { url } = req.body;
+  const { url } = await request.json() as { url?: string };
 
   if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+    return new Response(JSON.stringify({ error: 'URL is required' }), {
+      status: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   const domain = extractDomain(url);
+  const kv = env.TRUSTY_KV;
   const cacheKey = getCacheKey('whois', domain);
 
-  // Check cache first
-  const cached = await getCached<WhoisResult>(cacheKey);
+  const cached = await getCached<WhoisResult>(kv, cacheKey);
   if (cached) {
-    return res.status(200).json({ result: cached });
+    return new Response(JSON.stringify({ result: cached }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   try {
-    // Get RDAP URLs prioritized for this domain's TLD
     const rdapUrls = getRdapUrlsForDomain(domain);
 
     let data: RdapResponse | null = null;
@@ -216,7 +228,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // If RDAP failed, try who.is fallback
     if (!data) {
       console.log('RDAP failed, trying who.is fallback...');
       const whoIsData = await getCreationDateFromWhoIs(domain);
@@ -240,24 +251,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           },
         };
 
-        // Cache the result
-        await setCache(cacheKey, result, CACHE_TTL.WHOIS);
+        await setCache(kv, cacheKey, result, CACHE_TTL.WHOIS);
 
-        return res.status(200).json({ result });
+        return new Response(JSON.stringify({ result }), {
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+          },
+        });
       }
 
       throw new Error(`All RDAP sources failed and who.is fallback failed. Last RDAP: ${lastError}`);
     }
 
-    // Extract creation and expiration dates
-    // Different RDAP servers use different eventAction names
     let creationDate: string | null = null;
     let expirationDate: string | null = null;
 
     if (data.events) {
       for (const event of data.events) {
         const action = event.eventAction.toLowerCase();
-        // Handle various naming conventions
         if (action === 'registration' || action === 'created' || action === 'creation') {
           creationDate = event.eventDate;
         } else if (action === 'expiration' || action === 'expired') {
@@ -268,7 +280,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`Domain: ${domain}, Creation: ${creationDate}, Expiration: ${expirationDate}`);
 
-    // Extract registrar
     let registrar = 'Sconosciuto';
     if (data.entities) {
       const registrarEntity = data.entities.find((e) => e.roles?.includes('registrar'));
@@ -298,10 +309,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       };
 
-      // Cache even partial results (shorter TTL for warnings)
-      await setCache(cacheKey, result, CACHE_TTL.WHOIS / 30); // 1 day for warnings
+      await setCache(kv, cacheKey, result, CACHE_TTL.WHOIS / 30);
 
-      return res.status(200).json({ result });
+      return new Response(JSON.stringify({ result }), {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+      });
     }
 
     const domainAge = calculateDomainAge(creationDate);
@@ -321,14 +336,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     };
 
-    // Cache the result
-    await setCache(cacheKey, result, CACHE_TTL.WHOIS);
+    await setCache(kv, cacheKey, result, CACHE_TTL.WHOIS);
 
-    return res.status(200).json({ result });
+    return new Response(JSON.stringify({ result }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('RDAP error:', error);
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       result: {
         type: 'whois',
         status: 'warning',
@@ -343,6 +362,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: error instanceof Error ? error.message : 'Unknown error',
         },
       },
+    }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
     });
   }
-}
+};

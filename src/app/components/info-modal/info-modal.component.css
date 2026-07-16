@@ -96,7 +96,7 @@
 }
 
 .modal-header h2 {
-  font-size: 22px;
+  font-size: clamp(1.125rem, 2.5vw + 0.25rem, 1.375rem);
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -115,7 +115,7 @@
 }
 
 .info-section h3 {
-  font-size: 16px;
+  font-size: clamp(0.875rem, 1.5vw + 0.25rem, 1rem);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 12px;
@@ -136,7 +136,7 @@
 }
 
 .info-section p {
-  font-size: 14px;
+  font-size: clamp(0.75rem, 1vw + 0.25rem, 0.875rem);
   color: var(--text-secondary);
   line-height: 1.6;
   margin: 0 0 12px;
@@ -149,7 +149,7 @@
 }
 
 .info-section li {
-  font-size: 13px;
+  font-size: clamp(0.6875rem, 0.75vw + 0.25rem, 0.8125rem);
   color: var(--text-secondary);
   padding: 8px 0;
   padding-left: 24px;
@@ -189,12 +189,12 @@
 }
 
 .score-label {
-  font-size: 13px;
+  font-size: clamp(0.6875rem, 0.75vw + 0.25rem, 0.8125rem);
   color: var(--text-secondary);
 }
 
 .score-weight {
-  font-size: 13px;
+  font-size: clamp(0.6875rem, 0.75vw + 0.25rem, 0.8125rem);
   font-weight: 600;
   color: var(--primary);
 }
@@ -207,7 +207,7 @@
 .got-it-btn {
   width: 100%;
   padding: 16px;
-  font-size: 15px;
+  font-size: clamp(0.8125rem, 1.25vw + 0.25rem, 0.9375rem);
   font-weight: 600;
   color: white;
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));

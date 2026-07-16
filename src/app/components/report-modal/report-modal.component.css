@@ -95,7 +95,7 @@
 }
 
 .modal-header h2 {
-  font-size: 20px;
+  font-size: clamp(1.125rem, 2vw + 0.25rem, 1.375rem);
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -111,7 +111,7 @@
 
 .form-group label {
   display: block;
-  font-size: 14px;
+  font-size: clamp(0.75rem, 1vw + 0.25rem, 0.875rem);
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 8px;
@@ -122,7 +122,7 @@
 .form-group textarea {
   width: 100%;
   padding: 14px 16px;
-  font-size: 14px;
+  font-size: clamp(0.75rem, 1vw + 0.25rem, 0.875rem);
   font-family: inherit;
   color: var(--text-primary);
   background: rgba(148, 163, 184, 0.06);
@@ -169,14 +169,14 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 12px;
   color: var(--danger);
-  font-size: 14px;
+  font-size: clamp(0.75rem, 1vw + 0.25rem, 0.875rem);
   margin-bottom: 20px;
 }
 
 .submit-btn {
   width: 100%;
   padding: 16px;
-  font-size: 15px;
+  font-size: clamp(0.8125rem, 1.25vw + 0.25rem, 0.9375rem);
   font-weight: 600;
   color: white;
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -252,14 +252,14 @@
 }
 
 .success-message {
-  font-size: 18px;
+  font-size: clamp(1rem, 2vw + 0.25rem, 1.125rem);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 8px;
 }
 
 .success-submessage {
-  font-size: 14px;
+  font-size: clamp(0.75rem, 1vw + 0.25rem, 0.875rem);
   color: var(--text-secondary);
   margin: 0;
 }

@@ -1,5 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getCached, setCache, getCacheKey, CACHE_TTL } from './lib/cache.js';
+import { getCached, setCache, getCacheKey, CACHE_TTL } from '../lib/cache';
+import type { Env } from '../lib/types';
 
 interface SafeBrowsingResult {
   type: string;
@@ -44,31 +44,46 @@ function extractDomain(url: string): string {
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const { request, env } = context;
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  const { url } = req.body;
+  const { url } = await request.json() as { url?: string };
 
   if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+    return new Response(JSON.stringify({ error: 'URL is required' }), {
+      status: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
-  const apiKey = process.env['GOOGLE_SAFE_BROWSING_KEY'];
+  const apiKey = env.GOOGLE_SAFE_BROWSING_KEY;
 
   if (!apiKey) {
     console.error('GOOGLE_SAFE_BROWSING_KEY not configured');
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       result: {
         type: 'safe-browsing',
         status: 'warning',
@@ -82,17 +97,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: 'API not configured',
         },
       },
+    }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
     });
   }
 
   const normalizedUrl = normalizeUrl(url);
   const domain = extractDomain(url);
+  const kv = env.TRUSTY_KV;
   const cacheKey = getCacheKey('safe-browsing', domain);
 
-  // Check cache first
-  const cached = await getCached<SafeBrowsingResult>(cacheKey);
+  const cached = await getCached<SafeBrowsingResult>(kv, cacheKey);
   if (cached) {
-    return res.status(200).json({ result: cached });
+    return new Response(JSON.stringify({ result: cached }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   try {
@@ -129,14 +154,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const data: SafeBrowsingResponse = await response.json();
 
-    // If matches array exists and has items, threats were found
     const threats = data.matches || [];
     const isMalware = threats.some((t) => t.threatType === 'MALWARE');
     const isPhishing = threats.some((t) => t.threatType === 'SOCIAL_ENGINEERING');
     const isUnwanted = threats.some((t) => t.threatType === 'UNWANTED_SOFTWARE');
 
     if (threats.length > 0) {
-      // Dangerous site detected
       const threatTypes = threats.map((t) => t.threatType);
       let message = 'Minacce rilevate: ';
       const messages: string[] = [];
@@ -160,13 +183,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       };
 
-      // Cache dangerous results with shorter TTL (1 hour) to allow re-check
-      await setCache(cacheKey, result, 60 * 60);
+      await setCache(kv, cacheKey, result, 60 * 60);
 
-      return res.status(200).json({ result });
+      return new Response(JSON.stringify({ result }), {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+      });
     }
 
-    // No threats found - site is safe
     const result: SafeBrowsingResult = {
       type: 'safe-browsing',
       status: 'safe',
@@ -180,14 +206,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     };
 
-    // Cache safe results
-    await setCache(cacheKey, result, CACHE_TTL.SAFE_BROWSING);
+    await setCache(kv, cacheKey, result, CACHE_TTL.SAFE_BROWSING);
 
-    return res.status(200).json({ result });
+    return new Response(JSON.stringify({ result }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Safe Browsing API error:', error);
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       result: {
         type: 'safe-browsing',
         status: 'warning',
@@ -201,6 +231,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: error instanceof Error ? error.message : 'Unknown error',
         },
       },
+    }), {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
     });
   }
-}
+};
