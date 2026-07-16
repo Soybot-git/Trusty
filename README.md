@@ -4,7 +4,7 @@
 
 Trusty è una Progressive Web App (PWA) pensata per aiutare gli utenti italiani a proteggersi dalle truffe online, specialmente quando si trovano link sospetti sui social media.
 
-[Demo Live](https://trusty-ebon.vercel.app/) 
+[Demo Live](https://trusty.andreatommasini1998-dev.workers.dev) 
 
 ---
 
@@ -29,9 +29,9 @@ Il punteggio finale (0-100) è calcolato combinando diversi controlli:
 | Check | Peso | Descrizione |
 |-------|------|-------------|
 | Google Safe Browsing | Filtro | Blocco immediato se rilevato malware/phishing |
+| Recensioni (Trustpilot) | 40% | Rating e numero recensioni (min. 20 recensioni) |
 | Reputazione (VirusTotal) | 30% | Analisi dominio da 70+ engine di sicurezza |
-| Recensioni (Trustpilot) | 30% | Rating e numero recensioni (min. 20 recensioni) |
-| Certificato SSL | 20% | Verifica connessione sicura HTTPS |
+| Certificato SSL | 10% | Verifica connessione sicura HTTPS |
 | Età Dominio | 10% | Domini recenti sono più rischiosi |
 | Euristiche Trusty | 10% | Typosquatting, TLD sospetti, pattern anomali |
 
@@ -69,7 +69,7 @@ Il caching opera su due livelli per ridurre le chiamate alle API esterne e migli
 
 **Client (localStorage)** — I risultati completi vengono salvati nel browser per **24 ore**. Alla scadenza, la entry viene rimossa automaticamente al successivo accesso.
 
-**Server (Upstash Redis)** — Ogni check viene cachato individualmente con TTL diversi in base alla volatilità del dato:
+**Server (Cloudflare KV)** — Ogni check viene cachato individualmente con TTL diversi in base alla volatilità del dato:
 
 | Check | TTL | Motivazione |
 |-------|-----|-------------|
@@ -80,7 +80,7 @@ Il caching opera su due livelli per ridurre le chiamate alle API esterne e migli
 | Reputazione (VirusTotal) | 24 ore | Risk score dinamico |
 | Recensioni (Trustpilot) | 6 ore | Dato più volatile |
 
-Il caching Redis è opzionale: se le credenziali Upstash non sono configurate, l'app funziona comunque senza cache server-side.
+Il caching KV è opzionale: se il binding Cloudflare KV non è configurato, l'app funziona comunque senza cache server-side.
 
 ---
 
@@ -93,14 +93,14 @@ Il caching Redis è opzionale: se le credenziali Upstash non sono configurate, l
 - Zero dipendenze UI esterne
 
 ### Backend
-- **Vercel Functions** (TypeScript, serverless)
-- **Upstash Redis** per caching
+- **Cloudflare Pages Functions** (TypeScript, serverless)
+- **Cloudflare KV** per caching
 
 ### API Esterne
 - Google Safe Browsing API
 - VirusTotal API (reputazione dominio)
 - Trustpilot (scraping dati strutturati JSON-LD)
-- RDAP / who.is (età dominio)
+- RDAP (età dominio)
 
 ---
 
@@ -115,8 +115,8 @@ Il caching Redis è opzionale: se le credenziali Upstash non sono configurate, l
 
 ```bash
 # Clona il repository
-git clone https://github.com/user/trusty.git
-cd trusty
+git clone https://github.com/Soybot-git/Trusty.git
+cd Trusty
 
 # Installa dipendenze
 npm install
@@ -129,14 +129,13 @@ npm start
 
 ### Variabili d'Ambiente
 
-Crea un file `.env` o configura in Vercel Dashboard:
+Configura nel pannello Cloudflare Dashboard (Workers & Pages → Variables) oppure in `wrangler.jsonc`:
 
-| Variabile | Descrizione | Obbligatoria |
+| Variabile / Binding | Descrizione | Obbligatoria |
 |-----------|-------------|--------------|
 | `GOOGLE_SAFE_BROWSING_KEY` | API key Google Safe Browsing | Si |
 | `VIRUSTOTAL_API_KEY` | API key VirusTotal | Si |
-| `UPSTASH_REDIS_REST_URL` | URL Redis Upstash | No (caching) |
-| `UPSTASH_REDIS_REST_TOKEN` | Token Redis Upstash | No (caching) |
+| `TRUSTY_KV` | Cloudflare KV Namespace binding | No (caching) |
 
 ---
 
@@ -147,28 +146,40 @@ trusty/
 ├── src/
 │   ├── app/
 │   │   ├── components/
-│   │   │   ├── url-input/        # Input URL con validazione
-│   │   │   ├── trust-result/     # Visualizzazione risultato
-│   │   │   ├── loading/          # Animazione caricamento
-│   │   │   ├── share-buttons/    # Pulsanti condivisione
-│   │   │   ├── info-modal/       # Modal "Come funziona"
-│   │   │   ├── help-modal/       # Modal aiuto
-│   │   │   └── report-modal/     # Modal segnalazione bug
+│   │   │   ├── url-input/           # Input URL con validazione
+│   │   │   ├── trust-result/        # Visualizzazione risultato
+│   │   │   ├── loading/             # Animazione caricamento
+│   │   │   ├── share-buttons/       # Pulsanti condivisione
+│   │   │   ├── info-modal/          # Modal "Come funziona"
+│   │   │   ├── help-modal/          # Modal aiuto
+│   │   │   ├── report-modal/        # Modal segnalazione bug
+│   │   │   └── disclaimer-modal/    # Modal disclaimer
 │   │   ├── services/
-│   │   │   ├── trust-checker.service.ts
-│   │   │   └── scoring.service.ts
+│   │   │   ├── api/
+│   │   │   │   ├── safe-browsing.service.ts
+│   │   │   │   ├── whois.service.ts
+│   │   │   │   ├── ssl.service.ts
+│   │   │   │   ├── reputation.service.ts
+│   │   │   │   ├── reviews.service.ts
+│   │   │   │   └── heuristics.service.ts
+│   │   │   ├── scoring.service.ts
+│   │   │   └── trust-checker.service.ts
 │   │   └── models/
+│   │       ├── check-result.model.ts
+│   │       └── trust-result.model.ts
 │   └── assets/
-├── api/                          # Vercel Functions
-│   ├── check.ts                  # Endpoint principale (mock)
-│   ├── safe-browsing.ts          # Google Safe Browsing
-│   ├── whois.ts                  # RDAP + who.is
-│   ├── ssl.ts                    # Verifica certificato
-│   ├── reputation.ts             # VirusTotal (reputazione dominio)
-│   ├── reviews.ts                # Trustpilot (recensioni)
-│   ├── heuristics.ts             # Controlli euristici
+├── functions/                    # Cloudflare Pages Functions
+│   ├── api/
+│   │   ├── safe-browsing.ts      # Google Safe Browsing
+│   │   ├── whois.ts              # RDAP (età dominio)
+│   │   ├── ssl.ts                # Verifica certificato
+│   │   ├── reputation.ts         # VirusTotal (reputazione dominio)
+│   │   ├── reviews.ts            # Trustpilot (recensioni)
+│   │   └── heuristics.ts         # Controlli euristici
 │   └── lib/                      # Utilities condivise
-└── vercel.json
+│       ├── cache.ts              # Helper caching KV
+│       └── types.ts              # Tipi Cloudflare Env
+└── wrangler.jsonc                # Configurazione Cloudflare Pages
 ```
 
 ---
@@ -203,4 +214,6 @@ Verifica sempre autonomamente prima di effettuare acquisti, specialmente per imp
 
 ## License
 
-MIT © Trusty
+MIT
+
+By SoyBot <\°=°/>
