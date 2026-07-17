@@ -54,44 +54,49 @@ function getCertificateInfo(domain: string): Promise<CertificateInfo> {
         timeout: 10000,
       },
       () => {
-        const cert = socket.getPeerCertificate();
+        try {
+          const cert = socket.getPeerCertificate();
 
-        if (!cert || Object.keys(cert).length === 0) {
+          if (!cert || Object.keys(cert).length === 0) {
+            socket.destroy();
+            reject(new Error('No certificate found'));
+            return;
+          }
+
+          const now = new Date();
+          const validTo = new Date(cert.valid_to);
+          const validFrom = new Date(cert.valid_from);
+          const daysUntilExpiry = Math.floor((validTo.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+          const isValid = socket.authorized || (now >= validFrom && now <= validTo);
+
+          let issuer = 'Sconosciuto';
+          if (cert.issuer) {
+            issuer = cert.issuer.O || cert.issuer.CN || 'Sconosciuto';
+          }
+
+          let subject = domain;
+          if (cert.subject) {
+            subject = cert.subject.CN || domain;
+          }
+
+          const protocol = socket.getProtocol() || 'TLS';
+
           socket.destroy();
-          reject(new Error('No certificate found'));
-          return;
+
+          resolve({
+            isValid,
+            issuer,
+            subject,
+            validFrom: validFrom.toISOString().split('T')[0],
+            validTo: validTo.toISOString().split('T')[0],
+            daysUntilExpiry,
+            protocol,
+          });
+        } catch (err) {
+          socket.destroy();
+          reject(err);
         }
-
-        const now = new Date();
-        const validTo = new Date(cert.valid_to);
-        const validFrom = new Date(cert.valid_from);
-        const daysUntilExpiry = Math.floor((validTo.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-        const isValid = socket.authorized || (now >= validFrom && now <= validTo);
-
-        let issuer = 'Sconosciuto';
-        if (cert.issuer) {
-          issuer = cert.issuer.O || cert.issuer.CN || 'Sconosciuto';
-        }
-
-        let subject = domain;
-        if (cert.subject) {
-          subject = cert.subject.CN || domain;
-        }
-
-        const protocol = socket.getProtocol() || 'TLS';
-
-        socket.destroy();
-
-        resolve({
-          isValid,
-          issuer,
-          subject,
-          validFrom: validFrom.toISOString().split('T')[0],
-          validTo: validTo.toISOString().split('T')[0],
-          daysUntilExpiry,
-          protocol,
-        });
       }
     );
 
@@ -154,7 +159,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     });
   }
 
-  const { url } = await request.json() as { url?: string };
+  let url: string | undefined;
+  try {
+    ({ url } = await request.json() as { url?: string });
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+      status: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+    });
+  }
 
   if (!url) {
     return new Response(JSON.stringify({ error: 'URL is required' }), {
@@ -170,14 +186,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const kv = env.TRUSTY_KV;
   const cacheKey = getCacheKey('ssl', domain);
 
-  const cached = await getCached<SslResult>(kv, cacheKey);
-  if (cached) {
-    return new Response(JSON.stringify({ result: cached }), {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
-    });
+  try {
+    const cached = await getCached<SslResult>(kv, cacheKey);
+    if (cached) {
+      return new Response(JSON.stringify({ result: cached }), {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+  } catch {
+    // Se KV non è disponibile, procedi senza cache
   }
 
   try {
