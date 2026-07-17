@@ -1,5 +1,3 @@
-import * as tls from 'tls';
-import * as net from 'net';
 import { getCached, setCache, getCacheKey, CACHE_TTL } from '../lib/cache';
 import type { Env } from '../lib/types';
 
@@ -15,19 +13,16 @@ interface SslResult {
     subject?: string;
     expiresAt?: string;
     daysUntilExpiry?: number;
-    protocol?: string;
     error?: string;
   };
 }
 
-interface CertificateInfo {
+interface CertistCertificate {
   isValid: boolean;
   issuer: string;
   subject: string;
-  validFrom: string;
   validTo: string;
   daysUntilExpiry: number;
-  protocol: string;
 }
 
 function extractDomain(url: string): string {
@@ -43,76 +38,56 @@ function extractDomain(url: string): string {
   }
 }
 
-function getCertificateInfo(domain: string): Promise<CertificateInfo> {
-  return new Promise((resolve, reject) => {
-    const socket = tls.connect(
-      {
-        host: domain,
-        port: 443,
-        servername: domain,
-        rejectUnauthorized: false,
-        timeout: 10000,
-      },
-      () => {
-        try {
-          const cert = socket.getPeerCertificate();
+const CERTIST_API_BASE = 'https://api.cert.ist';
+const FETCH_TIMEOUT_MS = 10000;
 
-          if (!cert || Object.keys(cert).length === 0) {
-            socket.destroy();
-            reject(new Error('No certificate found'));
-            return;
-          }
+async function fetchCertificateFromCertIst(domain: string): Promise<CertistCertificate> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-          const now = new Date();
-          const validTo = new Date(cert.valid_to);
-          const validFrom = new Date(cert.valid_from);
-          const daysUntilExpiry = Math.floor((validTo.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  try {
+    const response = await fetch(`${CERTIST_API_BASE}/${domain}`, {
+      signal: controller.signal,
+    });
 
-          const isValid = socket.authorized || (now >= validFrom && now <= validTo);
-
-          let issuer = 'Sconosciuto';
-          if (cert.issuer) {
-            issuer = cert.issuer.O || cert.issuer.CN || 'Sconosciuto';
-          }
-
-          let subject = domain;
-          if (cert.subject) {
-            subject = cert.subject.CN || domain;
-          }
-
-          const protocol = socket.getProtocol() || 'TLS';
-
-          socket.destroy();
-
-          resolve({
-            isValid,
-            issuer,
-            subject,
-            validFrom: validFrom.toISOString().split('T')[0],
-            validTo: validTo.toISOString().split('T')[0],
-            daysUntilExpiry,
-            protocol,
-          });
-        } catch (err) {
-          socket.destroy();
-          reject(err);
-        }
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('ENOTFOUND');
       }
-    );
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
 
-    socket.on('error', (err) => {
-      socket.destroy();
-      reject(err);
-    });
+    const data = await response.json() as Record<string, unknown>;
 
-    socket.on('timeout', () => {
-      socket.destroy();
-      reject(new Error('Connection timeout'));
-    });
-  });
+    const certificate = data?.certificate as Record<string, unknown> | undefined;
+    const validityDates = certificate?.validity_dates as Record<string, string> | undefined;
+    const chain = (data?.chain as Array<Record<string, unknown>>) || [];
+
+    if (!validityDates || !validityDates.not_after) {
+      throw new Error('No certificate found');
+    }
+
+    const now = new Date();
+    const notBefore = new Date(validityDates.not_before);
+    const notAfter = new Date(validityDates.not_after);
+    const daysUntilExpiry = Math.floor((notAfter.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const isValid = now >= notBefore && now <= notAfter;
+
+    const leaf = (chain[0]?.components as Record<string, string> | undefined) || {};
+    const subject = leaf.CN || domain;
+
+    const issuerCert = (chain[1]?.components as Record<string, string> | undefined) || {};
+    const issuer = issuerCert.O || issuerCert.CN || 'Sconosciuto';
+
+    const validTo = validityDates.not_after.split('T')[0];
+
+    return { isValid, issuer, subject, validTo, daysUntilExpiry };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-function getScoreFromCertificate(cert: CertificateInfo): { score: number; status: string; message: string } {
+function getScoreFromCertificate(cert: CertistCertificate): { score: number; status: string; message: string } {
   if (!cert.isValid) {
     return { score: 0, status: 'danger', message: 'Certificato SSL non valido o scaduto' };
   }
@@ -201,7 +176,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const cert = await getCertificateInfo(domain);
+    const cert = await fetchCertificateFromCertIst(domain);
     const { score, status, message } = getScoreFromCertificate(cert);
 
     const result: SslResult = {
@@ -216,7 +191,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         subject: cert.subject,
         expiresAt: cert.validTo,
         daysUntilExpiry: cert.daysUntilExpiry,
-        protocol: cert.protocol,
       },
     };
 
@@ -233,7 +207,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('getaddrinfo')) {
+    if (errorMessage === 'ENOTFOUND') {
       return new Response(JSON.stringify({
         result: {
           type: 'ssl',
@@ -254,7 +228,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       });
     }
 
-    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
       return new Response(JSON.stringify({
         result: {
           type: 'ssl',
