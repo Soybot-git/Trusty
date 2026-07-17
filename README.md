@@ -4,7 +4,7 @@
 
 Trusty è una Progressive Web App (PWA) pensata per aiutare gli utenti italiani a proteggersi dalle truffe online, specialmente quando si trovano link sospetti sui social media.
 
-[Demo Live](https://trusty.andreatommasini1998-dev.workers.dev) 
+[Demo Live](https://trusty-4o6.pages.dev/) 
 
 ---
 

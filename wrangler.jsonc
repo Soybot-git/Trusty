@@ -8,9 +8,5 @@
       "binding": "TRUSTY_KV",
       "id": "c754edbbe7054caca74051cc3b5a003e"
     }
-  ],
-  "vars": {
-    "GOOGLE_SAFE_BROWSING_KEY": "",
-    "VIRUSTOTAL_API_KEY": ""
-  }
+  ]
 }
