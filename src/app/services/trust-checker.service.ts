@@ -188,8 +188,8 @@ export class TrustCheckerService {
       'safe-browsing': 0,
       whois: 10,
       ssl: 10,
-      reputation: 30,
-      reviews: 30,
+      reputation: 40,
+      reviews: 20,
       heuristics: 10,
     };
     return weights[type] || 10;

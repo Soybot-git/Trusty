@@ -54,8 +54,8 @@ export class ScoringService {
    * - WHOIS: 10%
    * - SSL: 20%
    * - Heuristics: 10%
-   * - Reputation (VirusTotal): 30%
-   * - Reviews: 30%
+   * - Reputation (VirusTotal): 40%
+   * - Reviews: 20%
    * - Safe Browsing: 0% (filter only)
    */
   calculateScore(url: string, checks: CheckResult[]): TrustResult {
@@ -101,9 +101,9 @@ export class ScoringService {
       }
     }
 
-    // Insufficient reviews = max score 70
+    // Insufficient reviews = max score 80
     if (reviewsCheck && hasInsufficientReviews(reviewsCheck.details)) {
-      finalScore = Math.min(finalScore, 70);
+      finalScore = Math.min(finalScore, 80);
     }
 
     return this.createResult(url, domain, Math.round(finalScore), checks);

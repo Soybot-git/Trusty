@@ -37,7 +37,7 @@ interface ReviewScore {
 }
 
 const MIN_REVIEWS_THRESHOLD = 20;
-const REVIEWS_WEIGHT = 30;
+const REVIEWS_WEIGHT = 20;
 const FETCH_TIMEOUT_MS = 8000;
 
 function extractDomain(url: string): string {

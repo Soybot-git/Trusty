@@ -12,7 +12,7 @@ Trusty è una Progressive Web App (PWA) pensata per aiutare gli utenti italiani 
 
 - **Analisi Istantanea** — Incolla un URL e ottieni un punteggio di affidabilità (0-100)
 - **Semaforo Visivo** — Verde (sicuro), giallo (attenzione), rosso (pericolo)
-- **Multi-Source Verification** — Controlli incrociati da Google Safe Browsing, VirusTotal, Trustpilot e altri
+- **Multi-Source Verification** — Controlli incrociati da Google Safe Browsing, VirusTotal, Trustpilot, TrustedShops, Sitejabber e altri
 - **PWA Installabile** — Installa l'app sul tuo dispositivo con un tap
 - **Condivisione Risultati** — Condividi facilmente il risultato con amici
 - **Segnalazione Anomalie** — Segnala risultati errati direttamente dall'app
@@ -29,8 +29,8 @@ Il punteggio finale (0-100) è calcolato combinando diversi controlli:
 | Check | Peso | Descrizione |
 |-------|------|-------------|
 | Google Safe Browsing | Filtro | Blocco immediato se rilevato malware/phishing |
-| Recensioni (Trustpilot) | 40% | Rating e numero recensioni (min. 20 recensioni) |
-| Reputazione (VirusTotal) | 30% | Analisi dominio da 70+ engine di sicurezza |
+| Recensioni | 20% | Rating aggregato da Trustpilot, TrustedShops e Sitejabber (min. 20 recensioni totali) |
+| Reputazione (VirusTotal) | 40% | Analisi dominio da 70+ engine di sicurezza |
 | Certificato SSL | 10% | Verifica connessione sicura HTTPS |
 | Età Dominio | 10% | Domini recenti sono più rischiosi |
 | Euristiche Trusty | 10% | Typosquatting, TLD sospetti, pattern anomali |
@@ -57,7 +57,15 @@ Il punteggio finale (0-100) è calcolato combinando diversi controlli:
 
 ### Recensioni
 
-Le recensioni vengono recuperate direttamente da Trustpilot tramite parsing dei dati strutturati (JSON-LD) dalla pagina di review del dominio. Se un sito ha meno di 20 recensioni su Trustpilot, il check recensioni assegna score 0 (il punteggio massimo senza recensioni è 70).
+Le recensioni vengono aggregate da **tre fonti** indipendenti per una valutazione più robusta:
+
+- **Trustpilot** — Parsing JSON-LD, microdata e data attributes
+- **TrustedShops** — API di rating pubblica
+- **Sitejabber** — Parsing JSON-LD, microdata e data attributes
+
+Il rating finale è calcolato come **media pesata sul numero di recensioni** di ciascuna fonte. Se le valutazioni tra le fonti divergono significativamente (differenza > 1.5), il punteggio viene penalizzato di 20 punti.
+
+Se un sito ha meno di 20 recensioni totali (sommate tra tutte le fonti), il check recensioni assegna score 0 e il punteggio massimo raggiungibile è 80.
 
 ### Reputazione Dominio
 
@@ -78,7 +86,7 @@ Il caching opera su due livelli per ridurre le chiamate alle API esterne e migli
 | SSL | 7 giorni | Certificati cambiano raramente |
 | Safe Browsing | 24 ore (1 ora se pericoloso) | Minacce aggiornate frequentemente |
 | Reputazione (VirusTotal) | 24 ore | Risk score dinamico |
-| Recensioni (Trustpilot) | 6 ore | Dato più volatile |
+| Recensioni | 6 ore | Dato più volatile |
 
 Il caching KV è opzionale: se il binding Cloudflare KV non è configurato, l'app funziona comunque senza cache server-side.
 
@@ -99,7 +107,7 @@ Il caching KV è opzionale: se il binding Cloudflare KV non è configurato, l'ap
 ### API Esterne
 - Google Safe Browsing API
 - VirusTotal API (reputazione dominio)
-- Trustpilot (scraping dati strutturati JSON-LD)
+- Trustpilot, TrustedShops, Sitejabber (scraping dati recensioni)
 - RDAP (età dominio)
 
 ---
