@@ -184,19 +184,12 @@ export class TrustCheckerService {
   }
 
   private getWeightForType(type: string): number {
-    // Weight distribution:
-    // Safe Browsing: 0% (preliminary filter only, blocks if malware)
-    // WHOIS: 10%
-    // SSL: 10%
-    // Heuristics: 10%
-    // Reputation (VirusTotal): 30%
-    // Reviews: 40%
     const weights: Record<string, number> = {
       'safe-browsing': 0,
       whois: 10,
       ssl: 10,
       reputation: 30,
-      reviews: 40,
+      reviews: 30,
       heuristics: 10,
     };
     return weights[type] || 10;

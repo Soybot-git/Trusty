@@ -39,10 +39,17 @@ export interface ReputationDetails {
 }
 
 export interface ReviewsDetails {
-  rating: number; // 1-5
+  aggregatedRating: number | null;
   totalReviews: number;
-  source: string;
-  url?: string;
+  sourceCount: number;
+  sources: Array<{
+    name: string;
+    rating: number | null;
+    totalReviews: number;
+    url: string | null;
+  }>;
+  insufficientReviews: boolean;
+  error?: string;
 }
 
 export interface HeuristicsDetails {

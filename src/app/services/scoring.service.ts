@@ -7,6 +7,7 @@ import {
   SafeBrowsingDetails,
   WhoisDetails,
   HeuristicsDetails,
+  ReviewsDetails,
   CheckDetails,
 } from '../models';
 
@@ -32,15 +33,14 @@ function isHeuristicsDetails(details: CheckDetails | undefined): details is Heur
   return details !== undefined && 'suspiciousPayments' in details && 'hasVatNumber' in details;
 }
 
-interface ReviewsDetailsWithInsufficient {
-  insufficientReviews?: boolean;
-  totalReviews?: number;
+function isReviewsDetails(details: CheckDetails | undefined): details is ReviewsDetails {
+  return details !== undefined && 'aggregatedRating' in details && 'sourceCount' in details;
 }
 
 function hasInsufficientReviews(details: CheckDetails | undefined): boolean {
   if (!details) return true;
-  const reviewDetails = details as ReviewsDetailsWithInsufficient;
-  return reviewDetails.insufficientReviews === true || (reviewDetails.totalReviews !== undefined && reviewDetails.totalReviews < 20);
+  if (!isReviewsDetails(details)) return true;
+  return details.insufficientReviews === true;
 }
 
 @Injectable({
@@ -101,6 +101,10 @@ export class ScoringService {
       }
     }
 
+    // Insufficient reviews = max score 70
+    if (reviewsCheck && hasInsufficientReviews(reviewsCheck.details)) {
+      finalScore = Math.min(finalScore, 70);
+    }
 
     return this.createResult(url, domain, Math.round(finalScore), checks);
   }
